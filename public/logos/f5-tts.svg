@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="F5-TTS logo">
+  <rect width="128" height="128" rx="28" fill="#f7f1df"/>
+  <path d="M30 66h14l10-22 18 48 12-26h14" fill="none" stroke="#17130f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="94" cy="34" r="13" fill="#ff6b35"/>
+  <text x="64" y="112" fill="#17130f" font-family="Arial, sans-serif" font-size="24" font-weight="800" text-anchor="middle">F5</text>
+</svg>

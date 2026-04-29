@@ -1,0 +1,48 @@
+name: Report Outdated Information
+description: Report incorrect or outdated data for a tool (pricing, capabilities, licensing)
+title: "[Outdated] "
+labels: ["data-update"]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool name / slug
+      placeholder: e.g. elevenlabs
+    validations:
+      required: true
+
+  - type: dropdown
+    id: field
+    attributes:
+      label: Which field is wrong?
+      options:
+        - pricing (model, starting price, free tier)
+        - licensing (commercial, YouTube, game, cloning)
+        - capabilities (cloning, multilingual, chinese, realtime, open source)
+        - tagline / description
+        - website URL
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: What does the directory currently say?
+    validations:
+      required: true
+
+  - type: textarea
+    id: correct
+    attributes:
+      label: What should it say?
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Source URL
+      placeholder: https://
+    validations:
+      required: true

@@ -1,0 +1,78 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import FilterPanel from '../../components/FilterPanel.astro';
+import { loadCategories } from '../../lib/data-loader';
+import { toolsByCategory } from '../../lib/tool-helpers';
+
+export async function getStaticPaths() {
+  const categories = loadCategories();
+  return categories.map((cat) => ({ params: { cat: cat.slug }, props: { category: cat } }));
+}
+
+const { category } = Astro.props;
+const allTools = await getCollection('tools');
+const tools    = toolsByCategory(allTools, category.slug);
+
+const GROUP_COLOR: Record<string, string> = {
+  creators:          'creator',
+  game_devs:         'gamedev',
+  voice_ai_builders: 'voiceai',
+  all:               'gray',
+};
+const color = GROUP_COLOR[category.user_group] ?? 'gray';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: `${category.name_en} voice AI tools`,
+  description: category.description_en,
+  url: `https://voice.tools/category/${category.slug}/`,
+  numberOfItems: tools.length,
+  itemListElement: tools.map((tool, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: `https://voice.tools/tools/${tool.slug}/`,
+    name: tool.data.name,
+    description: tool.data.tagline,
+  })),
+};
+---
+
+<BaseLayout
+  title={category.name_en}
+  description={category.description_en}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <main class="max-w-5xl mx-auto px-4 py-12">
+
+    <!-- Header -->
+    <section class="mb-10 pb-8 border-b border-gray-100">
+      <div class={`inline-flex items-center gap-2 text-sm font-medium text-${color}-600 bg-${color}-50 px-3 py-1 rounded-full mb-4`}>
+        {category.icon} {category.name_en}
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight mb-2">{category.name_en}</h1>
+      <p class="text-gray-500 text-lg">{category.description_en}</p>
+    </section>
+
+    <!-- Filters + Grid -->
+    <div class="flex gap-8">
+      <FilterPanel />
+
+      <div class="flex-1 min-w-0">
+        <div class="mb-4">
+          <p class="text-sm text-gray-500"><span id="tool-count">{tools.length}</span> tools in this category</p>
+        </div>
+        <ul class="grid gap-4 sm:grid-cols-2">
+          {tools.map((tool) => <ToolCard tool={tool} />)}
+        </ul>
+        {tools.length === 0 && (
+          <p class="text-gray-400 text-center py-12">No tools yet. <a href="/submit" class="underline">Submit one →</a></p>
+        )}
+      </div>
+    </div>
+  </main>
+</BaseLayout>

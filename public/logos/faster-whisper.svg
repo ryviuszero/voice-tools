@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="faster-whisper logo">
+  <rect width="128" height="128" rx="28" fill="#0f172a"/>
+  <path d="M34 72c10 12 20 18 30 18 16 0 28-12 30-30" fill="none" stroke="#38bdf8" stroke-width="9" stroke-linecap="round"/>
+  <path d="M36 50h56M45 35h38" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M79 30l16 20-16 20" fill="none" stroke="#f97316" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="64" y="112" fill="#f8fafc" font-family="Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">FW</text>
+</svg>

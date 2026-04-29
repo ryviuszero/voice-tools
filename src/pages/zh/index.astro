@@ -1,0 +1,224 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import ToolLogo from '../../components/ToolLogo.astro';
+import { getCollection } from 'astro:content';
+import { changelogDescription, loadCategories, recentChangelog } from '../../lib/data-loader';
+import { recentTools, BADGE_CLASS, formatToolBadge, visibleToolBadges } from '../../lib/tool-helpers';
+import { localizedPath, localizedToolData, localizedWorkflowData, t } from '../../lib/i18n';
+
+const lang = 'zh';
+const ui = t(lang);
+const allTools = await getCollection('tools');
+const categories = loadCategories();
+const changes = recentChangelog(5);
+
+const featuredCategories = categories.filter((c) => c.featured);
+const newTools = recentTools(allTools, 5);
+const featuredWorkflows = (await getCollection('workflows'))
+  .filter((workflow) => workflow.data.featured)
+  .sort((a, b) => Number(a.data.user_group !== 'creators') - Number(b.data.user_group !== 'creators'));
+const localizedToolNameBySlug = new Map(allTools.map((tool) => [tool.slug, localizedToolData(tool.data, lang).name]));
+const WORKFLOW_GROUP_META: Record<string, { emoji: string; color: string }> = {
+  creators: { emoji: '🎬', color: 'creator' },
+  game_devs: { emoji: '🎮', color: 'gamedev' },
+  voice_ai_builders: { emoji: '🤖', color: 'voiceai' },
+};
+
+const WORKFLOW_BG_LIGHT: Record<string, string> = {
+  creator: 'linear-gradient(135deg, rgba(249,115,22,0.08) 0%, rgba(249,115,22,0.02) 100%)',
+  gamedev: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(34,197,94,0.02) 100%)',
+  voiceai: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(99,102,241,0.02) 100%)',
+};
+
+const WORKFLOW_BG_DARK: Record<string, string> = {
+  creator: 'linear-gradient(135deg, rgba(255,79,0,0.13) 0%, rgba(255,79,0,0.04) 100%)',
+  gamedev: 'linear-gradient(135deg, rgba(197,192,177,0.13) 0%, rgba(197,192,177,0.04) 100%)',
+  voiceai: 'linear-gradient(135deg, rgba(255,79,0,0.10) 0%, rgba(197,192,177,0.05) 100%)',
+};
+---
+
+<BaseLayout title="语音 AI 工具目录" description="为内容创作者、游戏开发者和 Voice AI 开发者精选的语音 AI 工具目录。" lang={lang}>
+  <main class="max-w-5xl mx-auto px-4 py-16 space-y-20" data-pagefind-ignore>
+    <section class="relative text-center space-y-6 py-20 px-4 rounded-2xl overflow-hidden hero-mesh hero-showcase bg-dot-pattern">
+      <div class="hero-frequency-field" aria-hidden="true">
+        <span style="--x:9%;--y:26%;--h:76px;--color:#ff4f00;--delay:-0.8s;"></span>
+        <span style="--x:13%;--y:26%;--h:108px;--color:#ff8a3d;--delay:-1.7s;"></span>
+        <span style="--x:17%;--y:26%;--h:58px;--color:#fbbf24;--delay:-2.4s;"></span>
+        <span style="--x:73%;--y:20%;--h:86px;--color:#4ade80;--delay:-1.1s;"></span>
+        <span style="--x:77%;--y:20%;--h:122px;--color:#22c55e;--delay:-2.2s;"></span>
+        <span style="--x:81%;--y:20%;--h:66px;--color:#818cf8;--delay:-3.1s;"></span>
+        <span style="--x:15%;--y:70%;--h:92px;--color:#4ade80;--delay:-2.8s;"></span>
+        <span style="--x:19%;--y:70%;--h:46px;--color:#22c55e;--delay:-1.5s;"></span>
+        <span style="--x:72%;--y:68%;--h:62px;--color:#818cf8;--delay:-0.6s;"></span>
+        <span style="--x:76%;--y:68%;--h:104px;--color:#6366f1;--delay:-2.6s;"></span>
+        <span style="--x:80%;--y:68%;--h:72px;--color:#ff4f00;--delay:-3.7s;"></span>
+      </div>
+      <div class="hero-bottom-fade" aria-hidden="true"></div>
+
+      <div class="relative z-10 space-y-6">
+      <h1 class="text-5xl sm:text-6xl font-bold tracking-tight text-gradient-hero">语音 AI 工具目录</h1>
+      <p class="text-xl text-gray-500 dark:text-slate-400 max-w-2xl mx-auto">
+        为内容创作者、游戏开发者和 Voice AI 开发者精选的语音 AI 工具。
+      </p>
+
+      <label class="mx-auto flex items-center gap-3 w-full max-w-md px-4 py-3 rounded-xl text-left shadow-sm transition-colors border border-gray-300 bg-white text-gray-400 hover:border-gray-400 focus-within:border-gray-500 dark:border-white/15 dark:bg-white/[0.08] dark:backdrop-blur dark:hover:border-white/25">
+        <svg class="w-4 h-4 shrink-0 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="sr-only">搜索语音 AI 工具</span>
+        <input type="search" class="open-search-input flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none dark:text-slate-100 dark:placeholder:text-slate-500" placeholder={`搜索 ${allTools.length} 个语音 AI 工具...`} autocomplete="off" />
+        <kbd class="text-xs bg-gray-100 border border-gray-200 rounded px-1.5 py-0.5 font-mono dark:bg-white/[0.08] dark:border-white/15 dark:text-slate-500">/</kbd>
+      </label>
+
+      <div class="flex flex-wrap gap-3 justify-center">
+        <a href={localizedPath('/for-creators', lang)} data-nav-group-option="creators" class="btn-neon btn-neon-creator inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-creator-500 text-white font-medium hover:bg-creator-600 transition-colors">🎬 创作者</a>
+        <a href={localizedPath('/for-game-devs', lang)} data-nav-group-option="game_devs" class="btn-neon btn-neon-gamedev inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gamedev-500 text-white font-medium hover:bg-gamedev-600 transition-colors">🎮 游戏开发者</a>
+        <a href={localizedPath('/for-voice-ai', lang)} data-nav-group-option="voice_ai_builders" class="btn-neon btn-neon-voiceai inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-voiceai-500 text-white font-medium hover:bg-voiceai-600 transition-colors">🤖 Voice AI 开发者</a>
+      </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">
+        收藏工具
+        <span
+          class="text-sm font-normal text-gray-400 dark:text-slate-500 ml-2"
+          data-bookmarked-count
+          data-count-template="({count} 个已收藏)"
+          data-count-template-one="({count} 个已收藏)"
+        >(0 个已收藏)</span>
+      </h2>
+      <p data-bookmarked-empty class="text-sm text-gray-400 dark:text-slate-500">
+        当前会话还没有收藏工具。点击任意工具卡片右上角的书签即可添加到这里。
+      </p>
+      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {allTools.map((tool) => <ToolCard tool={tool} lang={lang} bookmarkListItem />)}
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-6">按分类浏览</h2>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {featuredCategories.map((cat) => (
+          <li>
+            <a href={localizedPath(`/category/${cat.slug}`, lang)} class="grid h-full min-h-24 grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-4 p-4 border border-gray-200 rounded-xl hover:border-gray-400 transition-colors dark:border-white/[0.08] dark:hover:border-white/20">
+              <span class="inline-flex h-14 w-14 items-center justify-center text-center text-xs leading-tight text-gray-400 dark:text-slate-400">
+                {cat.icon}
+              </span>
+              <div class="min-w-0">
+                <div class="font-medium text-sm">{cat.name_zh}</div>
+                <div class="text-xs text-gray-400">{cat.description_zh}</div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <div class="grid gap-12 lg:grid-cols-2">
+      {changes.length > 0 && (
+        <section>
+          <h2 class="text-xl font-semibold mb-5">近期更新</h2>
+          <ul class="divide-y divide-gray-100">
+            {changes.map((entry) => (
+              <li class="py-3 grid grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-3">
+                <time class="text-xs text-gray-400 pt-0.5">{entry.date.slice(5)}</time>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                  <a href={localizedPath(`/tools/${entry.tool_slug}`, lang)} class="text-sm font-medium hover:underline">{localizedToolNameBySlug.get(entry.tool_slug) ?? entry.tool_slug}</a>
+                  <span class="text-xs px-1 py-0.5 rounded bg-gray-100 text-gray-500">{ui.changeType[entry.change_type]}</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">{changelogDescription(entry, lang)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <a href={localizedPath('/changelog', lang)} class="text-sm text-orange-600 hover:underline mt-4 inline-block">查看完整变更日志 →</a>
+        </section>
+      )}
+
+      <section>
+        <h2 class="text-xl font-semibold mb-5">最近添加</h2>
+        <ul class="divide-y divide-gray-100">
+          {newTools.map((tool) => (
+            <li class="py-3 flex items-center gap-3">
+              {(() => {
+                const localized = localizedToolData(tool.data, lang);
+                return (
+                  <>
+              <ToolLogo src={tool.data.logo} alt="" size={24} class="w-6 h-6 rounded object-contain bg-gray-50 shrink-0" />
+              <div class="flex-1 min-w-0">
+                <a href={localizedPath(`/tools/${tool.slug}`, lang)} class="text-sm font-medium hover:underline">{localized.name}</a>
+                <p class="text-xs text-gray-400 truncate">{localized.tagline}</p>
+              </div>
+                  </>
+                );
+              })()}
+              {visibleToolBadges(tool.data.badges).slice(0, 1).map((badge) => (
+                <span class={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${BADGE_CLASS[badge]}`}>{formatToolBadge(badge, lang)}</span>
+              ))}
+            </li>
+          ))}
+        </ul>
+        <a href={localizedPath('/for-creators', lang)} class="text-sm text-blue-600 hover:underline mt-4 inline-block">浏览全部工具 →</a>
+      </section>
+    </div>
+
+    <section data-home-workflows>
+      <h2 class="text-2xl font-semibold mb-6">工作流指南</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        {featuredWorkflows.map((workflow) => {
+          const meta = WORKFLOW_GROUP_META[workflow.data.user_group];
+          const content = localizedWorkflowData(workflow.data, lang);
+          return (
+            <a
+              href={localizedPath(`/workflows/${workflow.slug}`, lang)}
+              class={`block p-5 glass-card glass-card-${meta.color} rounded-xl workflow-card`}
+              data-workflow-group={workflow.data.user_group}
+              data-bg-light={WORKFLOW_BG_LIGHT[meta.color]}
+              data-bg-dark={WORKFLOW_BG_DARK[meta.color]}
+            >
+              <div class="text-2xl mb-2">{meta.emoji}</div>
+              <div class="font-semibold text-sm mb-1 text-gray-900 dark:text-white">{content.title}</div>
+              <div class="text-xs text-gray-500 dark:text-slate-400">{content.description}</div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style is:global>
+  html[data-nav-group-value='creators'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='creators']),
+  html[data-nav-group-value='game_devs'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='game_devs']),
+  html[data-nav-group-value='voice_ai_builders'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='voice_ai_builders']) {
+    display: none;
+  }
+</style>
+
+<script>
+  function applyWorkflowBg() {
+    const isDark = document.documentElement.classList.contains('dark');
+    document.querySelectorAll<HTMLElement>('.workflow-card').forEach((card) => {
+      card.style.background = isDark ? (card.dataset.bgDark ?? '') : (card.dataset.bgLight ?? '');
+    });
+  }
+  applyWorkflowBg();
+  new MutationObserver(applyWorkflowBg).observe(document.documentElement, { attributeFilter: ['class'] });
+
+  function applyWorkflowAudienceFilter() {
+    const validGroups = new Set(['creators', 'game_devs', 'voice_ai_builders']);
+    const selectedGroup = localStorage.getItem('vtd_nav_group') || '';
+    document.querySelectorAll<HTMLElement>('[data-home-workflows] [data-workflow-group]').forEach((card) => {
+      const shouldShow = !validGroups.has(selectedGroup) || card.dataset.workflowGroup === selectedGroup;
+      card.classList.toggle('hidden', !shouldShow);
+    });
+  }
+  applyWorkflowAudienceFilter();
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'vtd_nav_group') applyWorkflowAudienceFilter();
+  });
+</script>

@@ -1,0 +1,149 @@
+---
+type GithubMetrics = {
+  repo: string;
+  source_url: string;
+  captured_at: Date;
+  stars: number;
+  forks: number;
+  watchers?: number;
+  open_issues?: number;
+  open_pull_requests?: number;
+  commits?: number;
+  last_commit_at?: Date;
+  latest_release_at?: Date;
+  has_releases?: boolean;
+  license?: string;
+  primary_language?: string;
+  archived?: boolean;
+  signals?: Array<'popular' | 'trending' | 'maintained' | 'dormant' | 'archived' | 'no_releases'>;
+  note?: string;
+};
+
+type Lang = 'en' | 'zh';
+
+const { metrics, lang = 'en' } = Astro.props as { metrics: GithubMetrics; lang?: Lang };
+
+const labels = {
+  en: {
+    title: 'Open Source Signals',
+    intro: `GitHub repository metrics for ${metrics.repo}`,
+    source: 'GitHub →',
+    stars: 'Stars',
+    forks: 'Forks',
+    watchers: 'Watching',
+    issues: 'Open issues',
+    prs: 'Open PRs',
+    commits: 'Commits',
+    lastCommit: 'Last commit',
+    release: 'Latest release',
+    noRelease: 'No releases',
+    license: 'License',
+    language: 'Language',
+    captured: 'Captured',
+    signals: {
+      popular: 'Popular',
+      trending: 'Trending',
+      maintained: 'Maintained',
+      dormant: 'Dormant',
+      archived: 'Archived',
+      no_releases: 'No releases',
+    },
+  },
+  zh: {
+    title: '开源指数',
+    intro: `${metrics.repo} 的 GitHub 仓库指标`,
+    source: 'GitHub →',
+    stars: 'Stars',
+    forks: 'Forks',
+    watchers: '关注',
+    issues: '开放 Issue',
+    prs: '开放 PR',
+    commits: '提交数',
+    lastCommit: '最近提交',
+    release: '最新版本',
+    noRelease: '暂无 Release',
+    license: '许可证',
+    language: '语言',
+    captured: '采集日期',
+    signals: {
+      popular: '热门',
+      trending: '增长中',
+      maintained: '仍在维护',
+      dormant: '活跃度低',
+      archived: '已归档',
+      no_releases: '无 Release',
+    },
+  },
+}[lang];
+
+const signalClass: Record<string, string> = {
+  popular: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+  trending: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+  maintained: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  dormant: 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300',
+  archived: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+  no_releases: 'bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-slate-400',
+};
+
+const statCards = [
+  { label: labels.stars, value: formatCompact(metrics.stars) },
+  { label: labels.forks, value: formatCompact(metrics.forks) },
+  ...(metrics.watchers !== undefined ? [{ label: labels.watchers, value: formatCompact(metrics.watchers) }] : []),
+  ...(metrics.open_issues !== undefined ? [{ label: labels.issues, value: formatCompact(metrics.open_issues) }] : []),
+  ...(metrics.open_pull_requests !== undefined ? [{ label: labels.prs, value: formatCompact(metrics.open_pull_requests) }] : []),
+  ...(metrics.commits !== undefined ? [{ label: labels.commits, value: formatCompact(metrics.commits) }] : []),
+].slice(0, 6);
+
+function formatCompact(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : 1)}k`;
+  return value.toLocaleString('en-US');
+}
+
+function formatDate(value?: Date) {
+  return value ? value.toISOString().slice(0, 10) : undefined;
+}
+---
+
+<section class="taaft-data-panel rounded-xl p-5">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{labels.title}</h2>
+      <p class="text-sm text-gray-400 dark:text-slate-500">{labels.intro}</p>
+    </div>
+    <a href={metrics.source_url} target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 dark:text-[#818cf8] hover:underline shrink-0">
+      {labels.source}
+    </a>
+  </div>
+
+  {metrics.signals && metrics.signals.length > 0 && (
+    <div class="flex flex-wrap gap-2 mb-4">
+      {metrics.signals.map((signal) => (
+        <span class={`text-xs px-2 py-0.5 rounded-full ${signalClass[signal] ?? 'bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-slate-400'}`}>
+          {labels.signals[signal]}
+        </span>
+      ))}
+    </div>
+  )}
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    {statCards.map((item) => (
+      <div class="taaft-stat-card bg-gray-50 dark:bg-white/[0.06] rounded-lg p-3">
+        <div class="text-xs text-gray-400 dark:text-slate-500">{item.label}</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-slate-100">{item.value}</div>
+      </div>
+    ))}
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500 dark:text-slate-500">
+    {metrics.last_commit_at && <span>{labels.lastCommit}: {formatDate(metrics.last_commit_at)}</span>}
+    <span>{labels.release}: {metrics.latest_release_at ? formatDate(metrics.latest_release_at) : labels.noRelease}</span>
+    {metrics.license && <span>{labels.license}: {metrics.license}</span>}
+    {metrics.primary_language && <span>{labels.language}: {metrics.primary_language}</span>}
+    <span>{labels.captured}: {formatDate(metrics.captured_at)}</span>
+  </div>
+
+  {metrics.note && (
+    <p class="taaft-note mt-3 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-white/[0.04] rounded-lg p-3 border border-gray-100 dark:border-white/[0.08]">{metrics.note}</p>
+  )}
+</section>

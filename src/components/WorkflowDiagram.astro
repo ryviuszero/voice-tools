@@ -1,0 +1,541 @@
+---
+import type { Language } from '../lib/i18n';
+
+type LocalizedLabel = {
+  i18n?: {
+    zh?: {
+      label?: string;
+      substeps?: string[];
+    };
+  };
+};
+
+type Branch = {
+  label: string;
+  terminal?: boolean;
+  loop?: boolean;
+  i18n?: {
+    zh?: {
+      label?: string;
+    };
+  };
+};
+
+type StepNode = LocalizedLabel & {
+  type: 'step';
+  label: string;
+  icon?: string;
+  substeps?: string[];
+};
+
+type DecisionNode = LocalizedLabel & {
+  type: 'decision';
+  label: string;
+  icon?: string;
+  yes: Branch;
+  no: Branch;
+};
+
+type EndNode = LocalizedLabel & {
+  type: 'end';
+  label: string;
+  icon?: string;
+};
+
+type DiagramStep = StepNode | DecisionNode | EndNode;
+type UserGroup = 'creators' | 'game_devs' | 'voice_ai_builders';
+
+const {
+  steps,
+  userGroup,
+  lang = 'en',
+} = Astro.props as {
+  steps: DiagramStep[];
+  userGroup: UserGroup;
+  lang?: Language;
+};
+
+const isZh = lang === 'zh';
+const labels = {
+  heading: isZh ? '工作流流程图' : 'Workflow diagram',
+  yes: isZh ? '是' : 'Yes',
+  no: isZh ? '否' : 'No',
+  loop: isZh ? '返回调整' : 'Loop back',
+  terminal: isZh ? '退出此流程' : 'Exit path',
+};
+
+const groupClass = `workflow-diagram--${userGroup.replace(/_/g, '-')}`;
+const arrowId = `workflow-arrow-${userGroup}-${lang}`;
+
+const canvas = {
+  width: 1530,
+  height: 386,
+  startX: 96,
+  gapX: 190,
+  centerY: 198,
+  topBranchY: 40,
+  bottomBranchY: 296,
+};
+
+function localizeNode(step: DiagramStep) {
+  return isZh ? step.i18n?.zh?.label ?? step.label : step.label;
+}
+
+function localizeBranch(branch: Branch) {
+  return isZh ? branch.i18n?.zh?.label ?? branch.label : branch.label;
+}
+
+function dimensions(step: DiagramStep) {
+  if (step.type === 'decision') return { width: 134, height: 116 };
+  if (step.type === 'end') return { width: 124, height: 60 };
+  return { width: 156, height: 76 };
+}
+
+function nodeAt(step: DiagramStep, index: number) {
+  const dim = dimensions(step);
+  const cx = canvas.startX + index * canvas.gapX;
+  const cy = canvas.centerY;
+  return {
+    ...dim,
+    cx,
+    cy,
+    x: cx - dim.width / 2,
+    y: cy - dim.height / 2,
+    left: cx - dim.width / 2,
+    right: cx + dim.width / 2,
+    top: cy - dim.height / 2,
+    bottom: cy + dim.height / 2,
+  };
+}
+
+function wrapText(value: string, maxChars: number, maxLines = 4) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!normalized) return [];
+
+  const chunks = normalized.includes(' ')
+    ? normalized.split(' ')
+    : Array.from(normalized);
+
+  const lines: string[] = [];
+  let current = '';
+
+  for (const chunk of chunks) {
+    const joiner = normalized.includes(' ') ? ' ' : '';
+    const candidate = current ? `${current}${joiner}${chunk}` : chunk;
+    if (candidate.length > maxChars && current) {
+      lines.push(current);
+      current = chunk;
+    } else {
+      current = candidate;
+    }
+  }
+
+  if (current) lines.push(current);
+
+  if (lines.length > maxLines) {
+    return [...lines.slice(0, maxLines - 1), `${lines.slice(maxLines - 1).join(' ').slice(0, maxChars - 1)}…`];
+  }
+
+  return lines;
+}
+
+function textLines(step: DiagramStep) {
+  const maxChars = step.type === 'decision' ? 14 : 20;
+  return wrapText(localizeNode(step), isZh ? Math.max(8, maxChars - 3) : maxChars);
+}
+
+function branchLines(branch: Branch) {
+  return wrapText(localizeBranch(branch), isZh ? 10 : 16, 3);
+}
+
+function lineY(lines: string[], centerY: number) {
+  return centerY - ((lines.length - 1) * 7);
+}
+
+function branchState(branch: Branch) {
+  if (branch.terminal) return 'terminal';
+  if (branch.loop) return 'loop';
+  return 'continue';
+}
+
+function mainEdgeLabel(step: DiagramStep) {
+  if (step.type !== 'decision') return undefined;
+
+  const yesState = branchState(step.yes);
+  const noState = branchState(step.no);
+
+  if (yesState === 'continue' && noState !== 'continue') return labels.yes;
+  if (noState === 'continue' && yesState !== 'continue') return labels.no;
+  return undefined;
+}
+
+const nodes = steps.map((step, index) => ({
+  step,
+  index,
+  box: nodeAt(step, index),
+  lines: textLines(step),
+  tone: index % 3,
+}));
+
+const mainEdges = nodes.slice(0, -1).map((node, index) => {
+  const next = nodes[index + 1];
+  return {
+    x1: node.box.right,
+    y1: canvas.centerY,
+    x2: next.box.left,
+    y2: canvas.centerY,
+    label: mainEdgeLabel(node.step),
+  };
+});
+
+const branchCards = nodes.flatMap((node) => {
+  if (node.step.type !== 'decision') return [];
+
+  return ([
+    { key: 'yes' as const, branch: node.step.yes, label: labels.yes },
+    { key: 'no' as const, branch: node.step.no, label: labels.no },
+  ]).filter(({ branch }) => branch.terminal || branch.loop).map(({ key, branch, label }) => {
+    const isLoop = Boolean(branch.loop);
+    const width = isLoop ? 148 : 144;
+    const height = 64;
+    const y = isLoop || key === 'no' ? canvas.bottomBranchY : canvas.topBranchY;
+    const x = node.box.cx - width / 2;
+    const targetIndex = Math.max(0, node.index - 1);
+    const target = nodes[targetIndex]?.box;
+
+    return {
+      key,
+      label,
+      branch,
+      lines: branchLines(branch),
+      isLoop,
+      width,
+      height,
+      x,
+      y,
+      cx: node.box.cx,
+      nodeBox: node.box,
+      target,
+    };
+  });
+});
+---
+
+<section class:list={['workflow-diagram', groupClass]} data-workflow-diagram>
+  <div class="workflow-diagram__header">
+    <h2>{labels.heading}</h2>
+  </div>
+
+  <div class="workflow-diagram__viewport">
+    <svg
+      class="workflow-diagram__canvas"
+      style="--diagram-base-width: 1440px; --diagram-zoom: 0.75;"
+      viewBox={`0 0 ${canvas.width} ${canvas.height}`}
+      role="img"
+      aria-label={labels.heading}
+    >
+      <defs>
+        <marker id={arrowId} markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path class="flow-arrowhead" d="M 0 0 L 9 4.5 L 0 9 z" />
+        </marker>
+      </defs>
+
+      {mainEdges.map((edge) => (
+        <g>
+          <path
+            class="flow-line"
+            d={`M ${edge.x1 + 2} ${edge.y1} H ${edge.x2 - 8}`}
+            marker-end={`url(#${arrowId})`}
+          />
+          {edge.label && (
+            <text class="flow-edge-label" x={(edge.x1 + edge.x2) / 2} y={edge.y1 - 12} text-anchor="middle">
+              {edge.label}
+            </text>
+          )}
+        </g>
+      ))}
+
+      {branchCards.map((card) => (
+        <g>
+          {card.isLoop ? (
+            <>
+              <path
+                class="flow-line"
+                d={`M ${card.cx} ${card.nodeBox.bottom} V ${card.y - 8}`}
+                marker-end={`url(#${arrowId})`}
+              />
+              {card.target && (
+                <path
+                  class="flow-line flow-line--muted"
+                  d={`M ${card.x} ${card.y + card.height / 2} H ${card.target.cx} V ${card.target.bottom + 8}`}
+                  marker-end={`url(#${arrowId})`}
+                />
+              )}
+            </>
+          ) : (
+            <path
+              class="flow-line"
+              d={`M ${card.cx} ${card.nodeBox.top - 2} V ${card.y + card.height + 10}`}
+              marker-end={`url(#${arrowId})`}
+            />
+          )}
+
+          <text
+            class="flow-edge-label"
+            x={card.cx + 14}
+            y={card.isLoop ? card.nodeBox.bottom + 22 : card.nodeBox.top - 18}
+            text-anchor="start"
+          >
+            {card.label}
+          </text>
+
+          <rect
+            class:list={['flow-node-shape', 'flow-node-shape--branch', card.isLoop && 'flow-node-shape--loop']}
+            x={card.x}
+            y={card.y}
+            width={card.width}
+            height={card.height}
+            rx="7"
+          />
+          <text
+            class="flow-node-text"
+            x={card.cx}
+            y={lineY(card.lines, card.y + card.height / 2)}
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >
+            {card.lines.map((line, index) => (
+              <tspan x={card.cx} dy={index === 0 ? 0 : 14}>{line}</tspan>
+            ))}
+          </text>
+        </g>
+      ))}
+
+      {nodes.map(({ step, box, lines, tone }) => (
+        <g>
+          {step.type === 'decision' ? (
+            <polygon
+              class="flow-node-shape flow-node-shape--decision"
+              points={`${box.cx},${box.top} ${box.right},${box.cy} ${box.cx},${box.bottom} ${box.left},${box.cy}`}
+            />
+          ) : (
+            <rect
+              class:list={[
+                'flow-node-shape',
+                step.type === 'step' && 'flow-node-shape--step',
+                step.type === 'step' && `flow-node-shape--tone-${tone}`,
+                step.type === 'end' && 'flow-node-shape--end',
+              ]}
+              x={box.x}
+              y={box.y}
+              width={box.width}
+              height={box.height}
+              rx={step.type === 'end' ? 30 : 7}
+            />
+          )}
+          <text
+            class="flow-node-text"
+            x={box.cx}
+            y={lineY(lines, box.cy)}
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >
+            {lines.map((line, index) => (
+              <tspan x={box.cx} dy={index === 0 ? 0 : 14}>{line}</tspan>
+            ))}
+          </text>
+        </g>
+      ))}
+    </svg>
+  </div>
+</section>
+
+<style>
+  .workflow-diagram {
+    --flow-accent: #ff4f00;
+    --flow-accent-2: #ff8a3d;
+    --flow-accent-3: #f97316;
+    --flow-step-fill: #fff3e8;
+    --flow-step-fill-2: #fff7df;
+    --flow-step-fill-3: #ffece4;
+    --flow-decision-fill: #ffb39f;
+    --flow-branch-fill: #fff8f3;
+    --flow-loop-fill: #fff0c9;
+    --flow-end-fill: #ffd8bd;
+    --flow-node-stroke: #f2a889;
+    --flow-line: #3d352f;
+    --flow-text: #201515;
+    margin: 2.5rem 0;
+  }
+
+  .workflow-diagram--game-devs {
+    --flow-accent: #22c55e;
+    --flow-accent-2: #16a34a;
+    --flow-accent-3: #84cc16;
+    --flow-step-fill: #edfdf4;
+    --flow-step-fill-2: #f4fce3;
+    --flow-step-fill-3: #e6f9ee;
+    --flow-decision-fill: #bbf7d0;
+    --flow-branch-fill: #f2fff7;
+    --flow-loop-fill: #dcfce7;
+    --flow-end-fill: #c7f9d8;
+    --flow-node-stroke: #86efac;
+  }
+
+  .workflow-diagram--voice-ai-builders {
+    --flow-accent: #6366f1;
+    --flow-accent-2: #818cf8;
+    --flow-accent-3: #06b6d4;
+    --flow-step-fill: #eef2ff;
+    --flow-step-fill-2: #ecfeff;
+    --flow-step-fill-3: #f5f3ff;
+    --flow-decision-fill: #c7d2fe;
+    --flow-branch-fill: #f8f7ff;
+    --flow-loop-fill: #e0f2fe;
+    --flow-end-fill: #ddd6fe;
+    --flow-node-stroke: #a5b4fc;
+  }
+
+  .workflow-diagram__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1rem;
+  }
+
+  .workflow-diagram h2 {
+    margin: 0 0 1rem;
+    color: var(--zapier-text, #201515);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .workflow-diagram__header h2 {
+    margin: 0;
+  }
+
+  .workflow-diagram__viewport {
+    width: 100%;
+    margin-inline: 0;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--zapier-border, #c5c0b1) 86%, transparent);
+    border-radius: 8px;
+    background:
+      radial-gradient(circle, color-mix(in srgb, var(--flow-accent) 14%, transparent) 1px, transparent 1px),
+      linear-gradient(180deg, color-mix(in srgb, var(--zapier-surface, #fffefb) 96%, white) 0%, var(--zapier-surface-2, #fffdf9) 100%);
+    background-size: 22px 22px, auto;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+    scrollbar-color: color-mix(in srgb, var(--zapier-border, #c5c0b1) 80%, var(--flow-accent)) transparent;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .workflow-diagram__canvas {
+    display: block;
+    width: calc(var(--diagram-base-width) * var(--diagram-zoom, 0.75));
+    max-width: none;
+    height: auto;
+  }
+
+  .flow-node-shape {
+    fill: var(--flow-step-fill);
+    stroke: var(--flow-node-stroke);
+    stroke-width: 1.1;
+    filter: drop-shadow(0 8px 14px rgba(32, 21, 21, 0.08));
+  }
+
+  .flow-node-shape--tone-1 {
+    fill: var(--flow-step-fill-2);
+  }
+
+  .flow-node-shape--tone-2 {
+    fill: var(--flow-step-fill-3);
+  }
+
+  .flow-node-shape--decision {
+    fill: var(--flow-decision-fill);
+    stroke: color-mix(in srgb, var(--flow-accent) 55%, var(--flow-node-stroke));
+  }
+
+  .flow-node-shape--end {
+    fill: var(--flow-end-fill);
+    stroke: color-mix(in srgb, var(--flow-accent) 36%, var(--flow-node-stroke));
+  }
+
+  .flow-node-shape--branch {
+    fill: var(--flow-branch-fill);
+  }
+
+  .flow-node-shape--loop {
+    fill: var(--flow-loop-fill);
+  }
+
+  .flow-line {
+    fill: none;
+    stroke: var(--flow-line);
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .flow-line--muted {
+    stroke-width: 1.35;
+    opacity: 0.82;
+  }
+
+  .flow-arrowhead {
+    fill: var(--flow-line);
+  }
+
+  .flow-node-text {
+    fill: var(--flow-text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .flow-edge-label {
+    fill: var(--flow-line);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  :global(html.dark) .workflow-diagram {
+    --flow-step-fill: #30221b;
+    --flow-step-fill-2: #352819;
+    --flow-step-fill-3: #3a241f;
+    --flow-decision-fill: #5d3126;
+    --flow-branch-fill: #2a211d;
+    --flow-loop-fill: #3a2f1a;
+    --flow-end-fill: #4b2b20;
+    --flow-node-stroke: #7a4b35;
+    --flow-line: #c5c0b1;
+    --flow-text: #f0ece6;
+  }
+
+  :global(html.dark) .workflow-diagram--game-devs {
+    --flow-step-fill: #172a1f;
+    --flow-step-fill-2: #1f3018;
+    --flow-step-fill-3: #173124;
+    --flow-decision-fill: #24543a;
+    --flow-branch-fill: #18251d;
+    --flow-loop-fill: #203522;
+    --flow-end-fill: #21462f;
+    --flow-node-stroke: #3c7b55;
+  }
+
+  :global(html.dark) .workflow-diagram--voice-ai-builders {
+    --flow-step-fill: #20223a;
+    --flow-step-fill-2: #172d36;
+    --flow-step-fill-3: #281f3b;
+    --flow-decision-fill: #363a68;
+    --flow-branch-fill: #1d1e31;
+    --flow-loop-fill: #1c3340;
+    --flow-end-fill: #352f5c;
+    --flow-node-stroke: #555ca9;
+  }
+</style>

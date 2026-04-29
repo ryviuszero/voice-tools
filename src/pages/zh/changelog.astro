@@ -1,0 +1,54 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { changelogDescription, loadChangelog } from '../../lib/data-loader';
+import { getCollection } from 'astro:content';
+import { localizedPath, t } from '../../lib/i18n';
+
+const lang = 'zh';
+const ui = t(lang);
+const changelog = loadChangelog();
+const allTools = await getCollection('tools');
+const toolNames = new Map(allTools.map((tool) => [tool.slug, tool.data.name]));
+
+const CHANGE_TYPE_CLASS: Record<string, string> = {
+  pricing_change: 'bg-yellow-100 text-yellow-700',
+  feature_added: 'bg-green-100 text-green-700',
+  product_change: 'bg-blue-100 text-blue-700',
+  model_release: 'bg-purple-100 text-purple-700',
+  policy_change: 'bg-red-100 text-red-700',
+};
+
+const byMonth: Record<string, typeof changelog> = {};
+for (const entry of changelog) {
+  (byMonth[entry.date.slice(0, 7)] ??= []).push(entry);
+}
+---
+
+<BaseLayout title="变更日志" description="跟踪语音 AI 工具的价格、功能和政策变化。" lang={lang}>
+  <main class="max-w-3xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-bold mb-2">变更日志</h1>
+    <p class="text-gray-500 mb-10">语音 AI 工具的价格、功能和政策变化，按时间倒序排列。</p>
+    {Object.entries(byMonth).map(([month, entries]) => (
+      <section class="mb-10">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">{month}</h2>
+        <ul class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+          {entries.map((entry) => (
+            <li class="px-5 py-4 grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 bg-white hover:bg-gray-50 transition-colors">
+              <time class="text-xs text-gray-400 pt-0.5">{entry.date.slice(5)}</time>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <a href={localizedPath(`/tools/${entry.tool_slug}`, lang)} class="text-sm font-medium hover:underline">{toolNames.get(entry.tool_slug) ?? entry.tool_slug}</a>
+                  <span class={`text-xs px-1.5 py-0.5 rounded ${CHANGE_TYPE_CLASS[entry.change_type] ?? 'bg-gray-100 text-gray-500'}`}>{ui.changeType[entry.change_type]}</span>
+                </div>
+                <p class="text-sm text-gray-600">{changelogDescription(entry, lang)}</p>
+                {entry.source_url && <a href={entry.source_url} target="_blank" rel="noopener noreferrer" class="text-xs text-blue-500 hover:underline mt-0.5 inline-block">来源 →</a>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+    {changelog.length === 0 && <p class="text-gray-400 text-center py-12">暂无变更记录。</p>}
+  </main>
+</BaseLayout>

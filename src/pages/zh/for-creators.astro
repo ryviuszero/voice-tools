@@ -1,0 +1,77 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import FilterPanel from '../../components/FilterPanel.astro';
+import { getCollection } from 'astro:content';
+import { loadCategories } from '../../lib/data-loader';
+import { toolsByUserGroup } from '../../lib/tool-helpers';
+import { localizedPath, localizedWorkflowData } from '../../lib/i18n';
+
+const lang = 'zh';
+const allTools = await getCollection('tools');
+const tools = toolsByUserGroup(allTools, 'creators');
+const creatorWorkflows = (await getCollection('workflows'))
+  .filter((workflow) => workflow.data.user_group === 'creators')
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+const categories = loadCategories().filter((c) => c.user_group === 'creators' || c.user_group === 'all');
+
+const workflowBgLight = 'linear-gradient(135deg,rgba(249,115,22,0.08) 0%,rgba(249,115,22,0.02) 100%)';
+const workflowBgDark = 'linear-gradient(135deg,rgba(255,79,0,0.13) 0%,rgba(255,79,0,0.04) 100%)';
+---
+
+<BaseLayout title="创作者语音 AI 工具" description="适合 YouTuber、播客和内容创作者的语音 AI 工具。" lang={lang}>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <section class="mb-10 pb-8 border-b border-gray-100">
+      <div class="inline-flex items-center gap-2 text-sm font-medium text-creator-600 bg-creator-50 px-3 py-1 rounded-full mb-4">🎬 内容创作者</div>
+      <h1 class="text-4xl font-bold tracking-tight mb-3">创作者语音 AI 工具</h1>
+      <p class="text-xl text-gray-500 max-w-2xl mb-6">寻找适合 YouTube、播客、配音翻译和音频制作的语音工具，重点关注价格和 YouTube 变现授权。</p>
+      <div class="flex flex-wrap gap-3">
+        {categories.slice(0, 5).map((cat) => <a href={localizedPath(`/category/${cat.slug}`, lang)} class="text-sm px-3 py-1.5 border border-gray-200 rounded-full hover:border-creator-400 hover:text-creator-600 transition-colors">{cat.name_zh}</a>)}
+        <a href={localizedPath('/workflows/youtube-multilingual', lang)} class="text-sm px-3 py-1.5 bg-creator-50 text-creator-700 rounded-full hover:bg-creator-100 transition-colors">YouTube 多语言工作流 →</a>
+        <a href={localizedPath('/workflows', lang)} class="text-sm px-3 py-1.5 bg-creator-50 text-creator-700 rounded-full hover:bg-creator-100 transition-colors">创作者工作流指南 →</a>
+      </div>
+    </section>
+    {creatorWorkflows.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold mb-4">创作者工作流指南</h2>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {creatorWorkflows.map((workflow) => {
+            const content = localizedWorkflowData(workflow.data, lang);
+            return (
+              <a
+                href={localizedPath(`/workflows/${workflow.slug}`, lang)}
+                class="block glass-card glass-card-creator rounded-xl p-4 workflow-card"
+                data-bg-light={workflowBgLight}
+                data-bg-dark={workflowBgDark}
+              >
+                <div class="text-xs text-creator-600 font-medium mb-2">{workflow.data.tool_recommendations.length} 个工具选项</div>
+                <h3 class="font-semibold text-sm mb-1 text-gray-900 dark:text-white">{content.title}</h3>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{content.description}</p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
+    <div class="flex gap-8">
+      <FilterPanel lang={lang} />
+      <div class="flex-1 min-w-0">
+        <p class="text-sm text-gray-500 mb-4"><span id="tool-count">{tools.length}</span> 个工具</p>
+        <ul class="grid gap-4 sm:grid-cols-2">{tools.map((tool) => <ToolCard tool={tool} lang={lang} />)}</ul>
+        {tools.length === 0 && <p class="text-gray-400 text-center py-12">暂时没有工具。<a href={localizedPath('/submit', lang)} class="underline">提交一个 →</a></p>}
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  function applyWorkflowBg() {
+    const isDark = document.documentElement.classList.contains('dark');
+    document.querySelectorAll<HTMLElement>('.workflow-card').forEach((card) => {
+      card.style.background = isDark ? (card.dataset.bgDark ?? '') : (card.dataset.bgLight ?? '');
+    });
+  }
+  applyWorkflowBg();
+  new MutationObserver(applyWorkflowBg).observe(document.documentElement, { attributeFilter: ['class'] });
+</script>

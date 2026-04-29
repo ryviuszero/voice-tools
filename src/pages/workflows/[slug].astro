@@ -1,0 +1,335 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookmarkToggle from '../../components/BookmarkToggle.astro';
+import ToolLogo from '../../components/ToolLogo.astro';
+import { getYouTubeEmbedUrl } from '../../lib/youtube';
+import WorkflowDiagram from '../../components/WorkflowDiagram.astro';
+import WorkflowToc from '../../components/WorkflowToc.astro';
+import { BADGE_CLASS, formatToolBadge, visibleToolBadges } from '../../lib/tool-helpers';
+
+export async function getStaticPaths() {
+  const workflows = await getCollection('workflows');
+  return workflows.map((wf) => ({ params: { slug: wf.slug }, props: { wf } }));
+}
+
+const { wf } = Astro.props;
+const { Content, headings } = await wf.render();
+const videoEmbedUrl = wf.data.video ? getYouTubeEmbedUrl(wf.data.video.url) : undefined;
+const workflowDiagram = wf.data.workflowDiagram ?? wf.data.diagram;
+
+const allTools    = await getCollection('tools');
+const slugMap     = new Map(allTools.map((t) => [t.slug, t]));
+const recommendationLabels: Record<string, string> = {
+  production_default: 'Production Default',
+  fast_rising: 'Fast-Rising Option',
+  open_or_self_hosted: 'Open or Self-Hosted Alternative',
+};
+const recommendationTierMeta: Record<string, { label: string; chipClass: string; dotClass: string }> = {
+  production_default: {
+    label: recommendationLabels.production_default,
+    chipClass: 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-[#fb923c]/10 dark:text-[#fb923c] dark:border-[#fb923c]/20',
+    dotClass: 'bg-orange-500 dark:bg-[#fb923c]',
+  },
+  fast_rising: {
+    label: recommendationLabels.fast_rising,
+    chipClass: 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-[#818cf8]/10 dark:text-[#818cf8] dark:border-[#818cf8]/20',
+    dotClass: 'bg-indigo-500 dark:bg-[#818cf8]',
+  },
+  open_or_self_hosted: {
+    label: recommendationLabels.open_or_self_hosted,
+    chipClass: 'bg-green-50 text-green-700 border-green-100 dark:bg-[#4ade80]/10 dark:text-[#4ade80] dark:border-[#4ade80]/20',
+    dotClass: 'bg-green-500 dark:bg-[#4ade80]',
+  },
+};
+const recommendationTierOrder = [
+  'production_default',
+  'fast_rising',
+  'open_or_self_hosted',
+];
+const recommendationCards = [];
+const recommendationCardSlugs = new Set<string>();
+
+for (const rec of wf.data.tool_recommendations) {
+  if (recommendationCardSlugs.has(rec.tool_slug)) continue;
+
+  const tool = slugMap.get(rec.tool_slug);
+  const tierMeta = recommendationTierMeta[rec.tier] ?? recommendationTierMeta.production_default;
+  recommendationCardSlugs.add(rec.tool_slug);
+  recommendationCards.push({
+    slug: rec.tool_slug,
+    href: `/tools/${rec.tool_slug}`,
+    name: rec.tool_name,
+    logo: tool?.data.logo,
+    tagline: rec.summary,
+    pricing: rec.pricing,
+    tier: rec.tier,
+    badges: tool ? visibleToolBadges(tool.data.badges) : [],
+  });
+}
+const recommendationGroups = Array.from(
+  recommendationCards.reduce((groups, card) => {
+    const cards = groups.get(card.tier) ?? [];
+    cards.push(card);
+    groups.set(card.tier, cards);
+    return groups;
+  }, new Map<string, typeof recommendationCards>())
+).map(([tier, cards]) => ({
+  tier,
+  cards,
+  meta: recommendationTierMeta[tier] ?? {
+    label: recommendationLabels[tier] ?? tier,
+    chipClass: recommendationTierMeta.production_default.chipClass,
+    dotClass: recommendationTierMeta.production_default.dotClass,
+  },
+})).sort((a, b) => {
+  const aIndex = recommendationTierOrder.indexOf(a.tier);
+  const bIndex = recommendationTierOrder.indexOf(b.tier);
+  return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+});
+
+// Static class strings — avoids dynamic Tailwind purge issues and supports dark mode
+const GROUP_META: Record<string, {
+  label: string;
+  emoji: string;
+  href: string;
+  pillClass: string;
+  tierBadgeClass: string;
+  ctaBgClass: string;
+  ctaBtnClass: string;
+}> = {
+  creators: {
+    label: 'Creators',
+    emoji: '🎬',
+    href:  '/for-creators',
+    pillClass:      'text-orange-600 bg-orange-50 border border-orange-200 dark:text-[#fb923c] dark:bg-[#fb923c]/10 dark:border-[#fb923c]/20',
+    tierBadgeClass: 'bg-orange-50 text-orange-700 dark:bg-[#fb923c]/10 dark:text-[#fb923c]',
+    ctaBgClass:     'bg-orange-50 dark:bg-[#fb923c]/[0.08] border border-orange-100 dark:border-[#fb923c]/15',
+    ctaBtnClass:    'bg-orange-500 hover:bg-orange-600 text-white dark:bg-[#fb923c] dark:hover:bg-[#ea8a28] btn-neon btn-neon-creator',
+  },
+  game_devs: {
+    label: 'Game Devs',
+    emoji: '🎮',
+    href:  '/for-game-devs',
+    pillClass:      'text-green-700 bg-green-50 border border-green-200 dark:text-[#4ade80] dark:bg-[#4ade80]/10 dark:border-[#4ade80]/20',
+    tierBadgeClass: 'bg-green-50 text-green-700 dark:bg-[#4ade80]/10 dark:text-[#4ade80]',
+    ctaBgClass:     'bg-green-50 dark:bg-[#4ade80]/[0.08] border border-green-100 dark:border-[#4ade80]/15',
+    ctaBtnClass:    'bg-green-500 hover:bg-green-600 text-white dark:bg-[#4ade80] dark:hover:bg-[#22c55e] dark:text-gray-900 btn-neon btn-neon-gamedev',
+  },
+  voice_ai_builders: {
+    label: 'Voice AI Builders',
+    emoji: '🤖',
+    href:  '/for-voice-ai',
+    pillClass:      'text-indigo-600 bg-indigo-50 border border-indigo-200 dark:text-[#818cf8] dark:bg-[#818cf8]/10 dark:border-[#818cf8]/20',
+    tierBadgeClass: 'bg-indigo-50 text-indigo-700 dark:bg-[#818cf8]/10 dark:text-[#818cf8]',
+    ctaBgClass:     'bg-indigo-50 dark:bg-[#818cf8]/[0.08] border border-indigo-100 dark:border-[#818cf8]/15',
+    ctaBtnClass:    'bg-indigo-500 hover:bg-indigo-600 text-white dark:bg-[#818cf8] dark:hover:bg-[#6366f1] btn-neon btn-neon-voiceai',
+  },
+};
+const meta = GROUP_META[wf.data.user_group];
+type TocItem = {
+  href: string;
+  label: string;
+  children?: TocItem[];
+};
+type RenderedHeading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
+function buildGuideToc(renderedHeadings: ReadonlyArray<RenderedHeading>): TocItem[] {
+  const items: TocItem[] = [];
+
+  for (const heading of renderedHeadings) {
+    if (heading.depth === 2) {
+      items.push({ href: `#${heading.slug}`, label: heading.text, children: [] });
+      continue;
+    }
+
+    if (heading.depth === 3 && items.length > 0) {
+      items[items.length - 1].children?.push({ href: `#${heading.slug}`, label: heading.text });
+    }
+  }
+
+  return items;
+}
+const guideTocItems = buildGuideToc(headings ?? []);
+const tocItems = [
+  { href: '#overview', label: 'Overview' },
+  workflowDiagram && { href: '#workflow-diagram', label: 'Workflow diagram' },
+  recommendationCards.length > 0 && { href: '#recommended-tools', label: 'Recommended tools' },
+  { href: '#guide', label: 'Guide', children: guideTocItems },
+  wf.data.video && videoEmbedUrl && { href: '#workflow-video', label: 'Video' },
+  wf.data.sources.length > 0 && { href: '#sources', label: 'Sources' },
+].filter(Boolean) as TocItem[];
+
+// JSON-LD HowTo — enhanced with tools and cost range
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: wf.data.title,
+  description: wf.data.description,
+  estimatedCost: {
+    '@type': 'MonetaryAmount',
+    currency: 'USD',
+    minValue: wf.data.budget_min_usd,
+    maxValue: wf.data.budget_max_usd,
+  },
+  tool: wf.data.tool_recommendations.map((rec) => ({
+    '@type': 'HowToTool',
+    name: rec.tool_name,
+    url: rec.url,
+  })),
+};
+---
+
+<BaseLayout title={wf.data.title} description={wf.data.description} activeNavGroup={wf.data.user_group}>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <main class="mx-auto max-w-7xl px-4 py-12">
+    <div class="grid gap-10 lg:grid-cols-[14rem_minmax(0,48rem)] xl:grid-cols-[16rem_minmax(0,48rem)] lg:justify-center">
+      <aside class="hidden lg:block" data-pagefind-ignore>
+        <WorkflowToc items={tocItems} label="On this page" ariaLabel="Workflow contents" />
+      </aside>
+
+      <article class="min-w-0" data-pagefind-body>
+        <section id="overview" class="scroll-mt-24">
+          <!-- Header breadcrumb -->
+          <div class="mb-2">
+            <a href="/workflows" class="text-sm text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300">← All Workflows</a>
+          </div>
+
+          <div class={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full mb-4 ${meta.pillClass}`}>
+            {meta.emoji} For {meta.label}
+          </div>
+
+          <h1 class="text-3xl font-bold mb-3 text-gray-900 dark:text-white">{wf.data.title}</h1>
+          <p class="text-gray-500 dark:text-slate-400 text-lg mb-6">{wf.data.description}</p>
+
+          <div class="flex flex-wrap gap-4 mb-10 text-sm text-gray-500 dark:text-slate-500">
+            <span>💰 Budget: <strong class="text-gray-700 dark:text-slate-300">${wf.data.budget_min_usd}–${wf.data.budget_max_usd}/mo</strong></span>
+          </div>
+        </section>
+
+        <!-- Flowchart -->
+        {workflowDiagram && (
+          <div id="workflow-diagram" class="scroll-mt-24">
+            <WorkflowDiagram steps={workflowDiagram.steps} userGroup={wf.data.user_group} />
+          </div>
+        )}
+
+        <!-- Recommended tool options -->
+        {recommendationCards.length > 0 && (
+      <section id="recommended-tools" class="mb-10 scroll-mt-24">
+        <div class="mb-4 flex items-end justify-between gap-3">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recommended tools</h2>
+          <span class="text-xs text-gray-400 dark:text-slate-500">{recommendationCards.length} recommendations</span>
+        </div>
+        <div class="space-y-5">
+          {recommendationGroups.map((group) => (
+            <div>
+              <div class="mb-2 flex items-center gap-2">
+                <span class={`h-2 w-2 rounded-full ${group.meta.dotClass}`}></span>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-200">{group.meta.label}</h3>
+                <span class="text-xs text-gray-400 dark:text-slate-500">{group.cards.length}</span>
+              </div>
+              <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {group.cards.map((card) => (
+                  <article class="group relative flex min-h-[8.75rem] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors hover:border-gray-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:hover:border-white/30">
+                    <BookmarkToggle slug={card.slug} class="absolute right-3 top-3 z-10" />
+                    <a href={card.href} class="flex flex-1 flex-col p-3 pr-11">
+                      <div class="flex items-start gap-3">
+                        {card.logo && (
+                          <ToolLogo
+                            src={card.logo}
+                            alt={`${card.name} logo`}
+                            size={36}
+                            class="h-9 w-9 shrink-0 rounded-lg bg-gray-100 object-contain dark:bg-white/[0.06]"
+                          />
+                        )}
+                        <div class="min-w-0">
+                          <h4 class="truncate text-base font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-[#818cf8]">{card.name}</h4>
+                        </div>
+                      </div>
+                      {card.badges.length > 0 && (
+                        <div class="mt-2 flex flex-wrap gap-1">
+                          {card.badges.slice(0, 2).map((badge) => (
+                            <span class={`rounded-full px-1.5 py-0.5 text-[11px] ${BADGE_CLASS[badge]}`}>
+                              {formatToolBadge(badge, 'en')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-500 dark:text-slate-400">{card.tagline}</p>
+                      <div class="mt-auto flex items-center justify-between gap-3 pt-3 text-xs">
+                        <span class="line-clamp-1 text-gray-500 dark:text-slate-500">{card.pricing}</span>
+                        <span class="shrink-0 font-medium text-blue-600 dark:text-[#818cf8]">View tool →</span>
+                      </div>
+                    </a>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+        <!-- Markdown body -->
+    <section id="guide" class="prose prose-gray dark:prose-invert max-w-none scroll-mt-24">
+      <Content />
+    </section>
+
+        {wf.data.video && videoEmbedUrl && (
+      <section id="workflow-video" class="my-10 scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Watch the workflow</h2>
+        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.04] aspect-video">
+          <iframe
+            class="h-full w-full"
+            src={videoEmbedUrl}
+            title={wf.data.video.title}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          />
+        </div>
+        {wf.data.video.title && (
+          <p class="mt-2 text-xs text-gray-400 dark:text-slate-500">{wf.data.video.title}</p>
+        )}
+      </section>
+    )}
+
+        {wf.data.sources.length > 0 && (
+      <section id="sources" class="border-t border-gray-100 dark:border-white/[0.06] pt-6 mt-10 scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Sources</h2>
+        <ul class="space-y-3">
+          {wf.data.sources.map((source) => (
+            <li class="text-sm">
+              <a href={source.url} target="_blank" rel="noopener noreferrer"
+                 class="font-medium text-blue-600 dark:text-[#818cf8] hover:underline">
+                {source.title}
+              </a>
+              {source.note && <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">{source.note}</p>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+        <!-- CTA -->
+    <div class={`mt-12 p-6 rounded-2xl flex items-center justify-between gap-4 flex-wrap ${meta.ctaBgClass}`}>
+      <div>
+        <p class="font-semibold text-gray-900 dark:text-white">Browse all {meta.label} tools</p>
+        <p class="text-sm text-gray-500 dark:text-slate-400">Filter by pricing, licensing, and capabilities</p>
+      </div>
+      <a href={meta.href}
+         class={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${meta.ctaBtnClass}`}>
+        {meta.emoji} {meta.label} Tools →
+      </a>
+    </div>
+      </article>
+    </div>
+
+  </main>
+</BaseLayout>

@@ -1,0 +1,39 @@
+{
+  "name": "voice-tools-directory",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && npx pagefind --site dist --output-path dist/pagefind",
+    "check": "astro check",
+    "preview": "astro preview",
+    "test": "tsx tests/run-tests.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "validate": "tsx scripts/validate-csvs.ts",
+    "fetch-logos": "tsx scripts/fetch-logos.ts",
+    "fetch-traffic": "tsx scripts/fetch-traffic-estimates.ts",
+    "update-data": "tsx scripts/update-tool-data.ts",
+    "stale-report": "tsx scripts/generate-stale-report.ts",
+    "audit-tools": "tsx scripts/audit-tool-research.ts",
+    "verify-tools": "tsx scripts/verify-tools.ts"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/tailwind": "^5.1.0",
+    "astro": "^5.6.0",
+    "gray-matter": "^4.0.3",
+    "papaparse": "^5.4.1",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@playwright/test": "^1.59.1",
+    "@types/papaparse": "^5.3.14",
+    "pagefind": "^1.5.2",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

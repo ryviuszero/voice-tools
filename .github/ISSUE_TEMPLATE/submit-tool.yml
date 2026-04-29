@@ -1,0 +1,107 @@
+name: Submit a Tool
+description: Suggest a voice AI tool to add to the directory
+title: "[Tool] "
+labels: ["new-tool"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the submission! Please fill in all fields. We'll review and create the Markdown file.
+
+  - type: input
+    id: name
+    attributes:
+      label: Tool name
+      placeholder: e.g. ElevenLabs
+    validations:
+      required: true
+
+  - type: input
+    id: website
+    attributes:
+      label: Official website
+      placeholder: https://
+    validations:
+      required: true
+
+  - type: input
+    id: tagline
+    attributes:
+      label: One-line description (max 100 chars)
+      placeholder: e.g. Industry-leading multilingual TTS and voice cloning platform
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Primary category
+      options:
+        - tts (Text-to-Speech)
+        - stt (Speech-to-Text)
+        - voice_cloning (Voice Cloning)
+        - dubbing (Dubbing & Translation)
+        - sound_effects (Sound Effects)
+        - voice_changer (Voice Changer)
+        - audio_cleanup (Audio Cleanup)
+        - voice_agent_platform (Voice Agent Platform)
+        - realtime_infrastructure (Realtime Infrastructure)
+        - conversation_framework (Conversation Framework)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pricing
+    attributes:
+      label: Pricing model
+      options:
+        - free
+        - freemium
+        - paid
+        - open_source
+        - enterprise
+    validations:
+      required: true
+
+  - type: input
+    id: starting_price
+    attributes:
+      label: Starting paid plan price (USD/month, 0 if none)
+      placeholder: "0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: user_groups
+    attributes:
+      label: Relevant user groups
+      options:
+        - label: Creators (YouTubers, podcasters, audiobook authors)
+        - label: Game Developers (NPC dialogue, localization)
+        - label: Voice AI Builders (agents, companions, phone bots)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: licensing
+    attributes:
+      label: Licensing (check all that apply, based on verified public documentation)
+      options:
+        - label: Commercial use allowed
+        - label: YouTube monetization allowed
+        - label: Game/in-product use allowed
+        - label: Voice cloning of third-party voices allowed
+
+  - type: input
+    id: source
+    attributes:
+      label: Source for licensing/pricing info
+      placeholder: URL to official pricing/terms page
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Any context a reviewer should know

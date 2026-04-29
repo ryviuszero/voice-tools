@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.local
+.claude/
+.codex/
+.brooks-lint-history.json
+.DS_Store
+Thumbs.db
+*.log
+.wrangler/
+.dev.vars
+reports/
+playwright-report/
+test-results/

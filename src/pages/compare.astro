@@ -1,0 +1,204 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Compare Tools"
+  description="Side-by-side comparison of voice AI tools."
+>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Compare Tools</h1>
+      <p class="text-gray-500">Select up to 4 tools to compare side-by-side.</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="compare-loading" class="text-center py-20 text-gray-400">
+      Loading comparison…
+    </div>
+
+    <!-- Empty state -->
+    <div id="compare-empty" class="hidden text-center py-20 space-y-4">
+      <p class="text-gray-400">No tools selected. Browse tools and click "+ Compare" to add them here.</p>
+      <div class="flex gap-3 justify-center">
+        <a href="/for-creators" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎬 Creators</a>
+        <a href="/for-game-devs" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎮 Game Devs</a>
+        <a href="/for-voice-ai" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🤖 Voice AI</a>
+      </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div id="compare-table" class="hidden overflow-x-auto"></div>
+  </main>
+</BaseLayout>
+
+<script>
+  const COMPARE_KEY = 'vtd_compare';
+
+  type CompareItem = { slug: string; name: string };
+
+  interface ToolData {
+    slug: string;
+    name: string;
+    tagline: string;
+    website: string;
+    logo: string;
+    primary_category: string;
+    pricing: { model: string; has_free_tier: boolean; starting_paid_usd: number; pricing_url: string; cost_per_1000_chars?: number; cost_per_minute?: number };
+    licensing: { commercial_use: boolean; youtube_monetization: boolean; game_use: boolean; voice_cloning_allowed: boolean; notes: string };
+    capabilities: { voice_cloning: boolean; multilingual: boolean; chinese_support: boolean; realtime_capable: boolean; open_source: boolean; offline_capable?: boolean; batch_api?: boolean };
+    badges: string[];
+    gotchas: string[];
+    portability?: { voice_model_export: boolean; notes?: string };
+  }
+
+  const PRICING_LABEL: Record<string, string> = {
+    free: 'Free', freemium: 'Freemium', paid: 'Paid', open_source: 'Open Source', enterprise: 'Enterprise',
+  };
+
+  function formatPrice(t: ToolData): string {
+    if (t.pricing.model === 'free' || t.pricing.model === 'open_source') return 'Free';
+    if (t.pricing.starting_paid_usd > 0) return `$${t.pricing.starting_paid_usd}/mo`;
+    return PRICING_LABEL[t.pricing.model] ?? t.pricing.model;
+  }
+
+  function bool(v: boolean) { return v ? '✅' : '✗'; }
+
+  function escapeHtml(value: string) {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[char]!);
+  }
+
+  function escapeAttr(value: string) {
+    return escapeHtml(value);
+  }
+
+  function renderTable(tools: ToolData[]) {
+    const rows: Array<{ label: string; fn: (t: ToolData) => string }> = [
+      { label: 'Category',           fn: (t) => t.primary_category.replace(/_/g, ' ') },
+      { label: 'Price',              fn: (t) => formatPrice(t) },
+      { label: 'Pricing Model',      fn: (t) => PRICING_LABEL[t.pricing.model] ?? t.pricing.model },
+      { label: 'Free Tier',          fn: (t) => bool(t.pricing.has_free_tier) },
+      { label: 'Cost / 1k chars',    fn: (t) => t.pricing.cost_per_1000_chars ? `$${t.pricing.cost_per_1000_chars}` : '-' },
+      { label: 'Cost / minute',      fn: (t) => t.pricing.cost_per_minute ? `$${t.pricing.cost_per_minute}` : '-' },
+      { label: '— Licensing ———',   fn: () => '' },
+      { label: 'Commercial Use',     fn: (t) => bool(t.licensing.commercial_use) },
+      { label: 'YouTube Monetize',   fn: (t) => bool(t.licensing.youtube_monetization) },
+      { label: 'Game Use',           fn: (t) => bool(t.licensing.game_use) },
+      { label: 'Voice Cloning OK',   fn: (t) => bool(t.licensing.voice_cloning_allowed) },
+      { label: '— Capabilities ——', fn: () => '' },
+      { label: 'Voice Cloning',      fn: (t) => bool(t.capabilities.voice_cloning) },
+      { label: 'Multilingual',       fn: (t) => bool(t.capabilities.multilingual) },
+      { label: 'Chinese Support',    fn: (t) => bool(t.capabilities.chinese_support) },
+      { label: 'Real-time',          fn: (t) => bool(t.capabilities.realtime_capable) },
+      { label: 'Open Source',        fn: (t) => bool(t.capabilities.open_source) },
+      { label: 'Offline / Local',    fn: (t) => t.capabilities.offline_capable === undefined ? '-' : bool(t.capabilities.offline_capable) },
+      { label: 'Batch API',          fn: (t) => t.capabilities.batch_api === undefined ? '-' : bool(t.capabilities.batch_api) },
+      { label: '— Risk Signals ——', fn: () => '' },
+      { label: 'Gotchas',            fn: (t) => String(t.gotchas?.length ?? 0) },
+      { label: 'Voice Model Export', fn: (t) => t.portability ? bool(t.portability.voice_model_export) : '-' },
+    ];
+
+    const cols = tools.map((t) => `
+      <th class="px-4 py-3 text-left font-semibold min-w-40">
+        <a href="/tools/${escapeAttr(encodeURIComponent(t.slug))}" class="hover:underline">
+          ${escapeHtml(t.name)}
+        </a>
+      </th>
+    `).join('');
+
+    const bodyRows = rows.map(({ label, fn }) => {
+      const isSep = label.startsWith('—');
+      if (isSep) {
+        return `<tr class="bg-gray-50"><td colspan="${tools.length + 1}" class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">${escapeHtml(label.replace(/—\s*|\s*——/g, '').trim())}</td></tr>`;
+      }
+      const vals = tools.map((t) => {
+        const v = fn(t);
+        const cls = v === '✅' ? 'text-green-600' : v === '✗' ? 'text-red-400' : '';
+        return `<td class="px-4 py-3 text-sm ${cls}">${escapeHtml(v)}</td>`;
+      }).join('');
+      return `<tr class="border-t border-gray-100 hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(label)}</td>${vals}</tr>`;
+    }).join('');
+
+    return `
+      <table class="w-full border border-gray-200 rounded-xl overflow-hidden">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left text-sm text-gray-400 font-normal min-w-32"></th>
+            ${cols}
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+      <div class="mt-6 flex gap-3 flex-wrap">
+        ${tools.map((t) => `
+          <button class="remove-btn text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:border-red-300 hover:text-red-500 transition-colors" data-slug="${escapeAttr(t.slug)}">
+            Remove ${escapeHtml(t.name)}
+          </button>
+        `).join('')}
+        <a href="/" class="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">Add more tools</a>
+      </div>
+    `;
+  }
+
+  async function init() {
+    const loadingEl = document.getElementById('compare-loading')!;
+    const emptyEl   = document.getElementById('compare-empty')!;
+    const tableEl   = document.getElementById('compare-table')!;
+
+    // Read slugs from URL params, fallback to localStorage
+    const params = new URLSearchParams(location.search);
+    const urlSlugs = params.get('tools')?.split(',').filter(Boolean) ?? [];
+    const lsSlugs  = (JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]') as CompareItem[]).map((i) => i.slug);
+    const slugs    = urlSlugs.length ? urlSlugs : lsSlugs;
+
+    if (!slugs.length) {
+      loadingEl.classList.add('hidden');
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    // Fetch tool data from static API
+    try {
+      const res   = await fetch('/api/tools.json');
+      const all   = await res.json() as ToolData[];
+      const tools = slugs.map((s) => all.find((t) => t.slug === s)).filter((t): t is ToolData => !!t);
+
+      if (!tools.length) {
+        loadingEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      loadingEl.classList.add('hidden');
+      tableEl.classList.remove('hidden');
+      tableEl.innerHTML = renderTable(tools);
+
+      tableEl.addEventListener('click', (e) => {
+        const btn = (e.target as Element).closest<HTMLButtonElement>('.remove-btn');
+        if (!btn) return;
+        const slug = btn.dataset.slug!;
+        const stored = JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]') as CompareItem[];
+        localStorage.setItem(COMPARE_KEY, JSON.stringify(stored.filter((i) => i.slug !== slug)));
+        const remaining = slugs.filter((s) => s !== slug);
+        if (!remaining.length) {
+          tableEl.classList.add('hidden');
+          emptyEl.classList.remove('hidden');
+        } else {
+          const newTools = tools.filter((t) => t.slug !== slug);
+          tableEl.innerHTML = renderTable(newTools);
+        }
+      });
+    } catch {
+      loadingEl.textContent = 'Failed to load tool data.';
+    }
+  }
+
+  init();
+</script>

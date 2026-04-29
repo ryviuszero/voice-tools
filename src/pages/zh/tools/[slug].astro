@@ -1,0 +1,354 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ToolCard from '../../../components/ToolCard.astro';
+import BookmarkToggle from '../../../components/BookmarkToggle.astro';
+import TrafficOverview from '../../../components/TrafficOverview.astro';
+import GithubMetrics from '../../../components/GithubMetrics.astro';
+import ToolLogo from '../../../components/ToolLogo.astro';
+import YouTubeEmbed from '../../../components/YouTubeEmbed.astro';
+import WorkflowToc from '../../../components/WorkflowToc.astro';
+import { changelogDescription, loadChangelog } from '../../../lib/data-loader';
+import {
+  BADGE_CLASS,
+  formatBeginnerFit,
+  formatCategoryTagItems,
+  formatQualityRisk,
+  formatRightsConfidence,
+  formatToolBadge,
+  formatToolPrice,
+  formatToolPricingModel,
+  getAlternatives,
+  visibleToolBadges,
+} from '../../../lib/tool-helpers';
+import { extractMarkdownHeadings, localizedPath, localizedToolData, renderLocalizedMarkdown, t } from '../../../lib/i18n';
+import { githubEditUrl } from '../../../lib/site-config';
+
+const lang = 'zh';
+const ui = t(lang);
+
+export async function getStaticPaths() {
+  const tools = await getCollection('tools');
+  return tools.map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
+}
+
+const { tool } = Astro.props;
+const { data } = tool;
+const { Content, headings } = await tool.render();
+const allTools = await getCollection('tools');
+const changelog = loadChangelog().filter((entry) => entry.tool_slug === tool.slug);
+const alternativeTools = getAlternatives(tool, allTools);
+const price = formatToolPrice(tool, lang);
+const content = localizedToolData(data, lang);
+const visibleBadges = visibleToolBadges(data.badges);
+const categoryTags = formatCategoryTagItems(tool, lang);
+const editUrl = githubEditUrl(`src/content/tools/${tool.slug}.md`);
+
+type TocItem = {
+  href: string;
+  label: string;
+  children?: TocItem[];
+};
+type RenderedHeading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
+function buildGuideToc(renderedHeadings: ReadonlyArray<RenderedHeading>): TocItem[] {
+  const items: TocItem[] = [];
+
+  for (const heading of renderedHeadings) {
+    if (heading.depth === 2) {
+      items.push({ href: `#${heading.slug}`, label: heading.text, children: [] });
+      continue;
+    }
+
+    if (heading.depth === 3 && items.length > 0) {
+      items[items.length - 1].children?.push({ href: `#${heading.slug}`, label: heading.text });
+    }
+  }
+
+  return items;
+}
+
+const guideHeadings = content.body ? extractMarkdownHeadings(content.body) : headings;
+const guideTocItems = buildGuideToc(guideHeadings ?? []);
+const tocItems = [
+  {
+    href: '#overview',
+    label: '概览',
+    children: [
+      data.video && { href: '#tool-video', label: '视频' },
+      { href: '#licensing', label: '授权' },
+      content.gotchas.length > 0 && { href: '#gotchas', label: '使用说明' },
+      { href: '#capabilities', label: '能力' },
+      data.language_quality && Object.keys(data.language_quality).length > 0 && { href: '#language-quality', label: '语言质量' },
+      data.traffic_estimates && { href: '#traffic', label: '流量' },
+      data.github_metrics && { href: '#github', label: 'GitHub' },
+      { href: '#pricing', label: '价格' },
+      data.portability && { href: '#lock-in', label: '迁移与锁定' },
+    ].filter(Boolean) as TocItem[],
+  },
+  { href: '#guide', label: '详细指南', children: guideTocItems },
+  (alternativeTools.length > 0 || changelog.length > 0) && {
+    href: alternativeTools.length > 0 ? '#alternatives' : '#changelog',
+    label: '更多信息',
+    children: [
+      alternativeTools.length > 0 && { href: '#alternatives', label: '替代工具' },
+      changelog.length > 0 && { href: '#changelog', label: '近期变更' },
+    ].filter(Boolean) as TocItem[],
+  },
+].filter(Boolean) as TocItem[];
+
+const QUALITY_DOT: Record<string, string> = {
+  excellent: 'bg-green-500',
+  good: 'bg-yellow-400',
+  limited: 'bg-orange-400',
+  poor: 'bg-red-400',
+};
+---
+
+<BaseLayout title={content.name} description={content.tagline} lang={lang}>
+  <main class="mx-auto max-w-7xl px-4 py-12">
+    <div class="grid gap-10 lg:grid-cols-[14rem_minmax(0,48rem)] xl:grid-cols-[16rem_minmax(0,48rem)] lg:justify-center">
+      <aside class="hidden lg:block" data-pagefind-ignore>
+        <WorkflowToc items={tocItems} label="目录" ariaLabel="工具目录" />
+      </aside>
+
+      <article class="min-w-0 space-y-12" data-pagefind-body>
+    <section id="overview" class="scroll-mt-24 flex flex-col sm:flex-row gap-6 items-start">
+      <ToolLogo src={data.logo} alt={`${content.name} logo`} size={64} loading="eager" class="w-16 h-16 rounded-xl object-contain bg-gray-50 border border-gray-100 shrink-0 dark:bg-white/[0.06] dark:border-white/[0.08]" />
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{content.name}</h1>
+          {visibleBadges.map((badge) => <span class={`text-xs px-2 py-0.5 rounded-full ${BADGE_CLASS[badge]}`}>{formatToolBadge(badge, lang)}</span>)}
+        </div>
+        <p class="text-gray-500 dark:text-slate-400 text-lg mb-4">{content.tagline}</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href={data.website} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors dark:bg-[#818cf8] dark:hover:bg-[#6366f1] btn-neon btn-neon-voiceai">访问官网 ↗</a>
+          <button class="compare-btn px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-500 transition-colors dark:border-white/20 dark:text-slate-300 dark:hover:border-[#818cf8]/50 dark:hover:text-[#818cf8]" data-slug={tool.slug} data-name={content.name}>+ {ui.common.compare}</button>
+          <BookmarkToggle slug={tool.slug} lang={lang} size="detail" />
+          <div class="flex basis-full flex-wrap items-center gap-2 pt-1">
+            {categoryTags.map((item) => (
+              <a
+                href={localizedPath(`/category/${item.slug}`, lang)}
+                class="rounded-md border border-gray-300/70 bg-gray-100/70 px-2 py-0.5 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-500 hover:bg-gray-200/70 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:hover:border-[#818cf8]/50 dark:hover:text-[#818cf8]"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {[
+        { label: ui.labels.price, value: price },
+        { label: '质量风险', value: formatQualityRisk(tool, lang) },
+        { label: '上手难度', value: formatBeginnerFit(tool, lang) },
+        { label: '商用清晰度', value: formatRightsConfidence(tool, lang) },
+      ].map(({ label, value }) => (
+        <div class="bg-gray-50 dark:bg-white/[0.06] rounded-xl p-3 text-center">
+          <div class="text-xs text-gray-400 dark:text-slate-500 mb-0.5">{label}</div>
+          <div class="truncate text-sm font-semibold text-gray-900 dark:text-slate-100">{value}</div>
+        </div>
+      ))}
+    </section>
+
+    {data.video && (
+      <YouTubeEmbed
+        id="tool-video"
+        url={data.video.url}
+        title={data.video.i18n?.zh?.title ?? data.video.title}
+        heading="效果展示"
+        caption={data.video.i18n?.zh?.title ?? data.video.title}
+      />
+    )}
+
+    <section id="licensing" class="scroll-mt-24">
+      <h2 class="text-lg font-semibold mb-1 text-gray-900 dark:text-white">{ui.labels.canIUseThis}</h2>
+      <p class="text-sm text-gray-400 dark:text-slate-500 mb-4">{ui.labels.licensingSummary}</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {[
+          { label: ui.labels.commercialProjects, sublabel: ui.labels.commercialProjectsHint, ok: data.licensing.commercial_use },
+          { label: ui.labels.youtubeMonetization, sublabel: '生成内容用于 YouTube 变现', ok: data.licensing.youtube_monetization },
+          { label: ui.labels.shippingInGames, sublabel: ui.labels.shippingInGamesHint, ok: data.licensing.game_use },
+          { label: ui.labels.voiceCloning, sublabel: ui.labels.voiceCloningHint, ok: data.licensing.voice_cloning_allowed },
+        ].map(({ label, sublabel, ok }) => (
+          <div class={`flex items-start gap-3 rounded-xl p-4 border ${ok ? 'border-green-200 bg-green-50 dark:border-green-500/25 dark:bg-green-500/[0.08]' : 'border-red-100 bg-red-50 dark:border-red-500/25 dark:bg-red-500/[0.08]'}`}>
+            <span class={`text-xl shrink-0 mt-0.5 ${ok ? 'text-green-600 dark:text-green-400' : 'text-red-400 dark:text-red-400'}`}>{ok ? '✅' : '✗'}</span>
+            <div>
+              <div class="text-sm font-semibold text-gray-800 dark:text-slate-100">{label}</div>
+              <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{sublabel}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {content.licensingNotes && <p class="mt-3 text-sm text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-white/[0.04] rounded-xl p-4 border border-gray-100 dark:border-white/[0.08]">{content.licensingNotes}</p>}
+    </section>
+
+    {content.gotchas.length > 0 && (
+      <section id="gotchas" class="scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-1 text-gray-900 dark:text-white">⚠️ {ui.labels.gotchas}</h2>
+        <p class="text-sm text-gray-400 dark:text-slate-500 mb-4">{ui.labels.gotchasHint}</p>
+        <ul class="space-y-2">
+          {content.gotchas.map((gotcha: string) => (
+            <li class="flex items-start gap-3 bg-amber-50 dark:bg-amber-500/[0.08] border border-amber-200 dark:border-amber-500/25 rounded-xl px-4 py-3">
+              <span class="text-amber-500 dark:text-amber-400 shrink-0 mt-0.5">!</span>
+              <span class="text-sm text-amber-900 dark:text-amber-200">{gotcha}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section id="capabilities" class="scroll-mt-24">
+      <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{ui.labels.capabilities}</h2>
+      <ul class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+        {([
+          { label: ui.labels.voiceCloning, ok: data.capabilities.voice_cloning },
+          { label: ui.labels.multilingual, ok: data.capabilities.multilingual },
+          { label: ui.labels.realTime, ok: data.capabilities.realtime_capable },
+          { label: ui.labels.openSource, ok: data.capabilities.open_source },
+          ...(data.capabilities.offline_capable !== undefined ? [{ label: ui.labels.offlineLocal, ok: data.capabilities.offline_capable }] : []),
+          ...(data.capabilities.batch_api !== undefined ? [{ label: ui.labels.batchApi, ok: data.capabilities.batch_api }] : []),
+        ] as { label: string; ok: boolean }[]).map(({ label, ok }) => <li class={`flex items-center gap-2 px-3 py-2 rounded-lg ${ok ? 'bg-green-50 text-green-800 dark:bg-green-500/[0.10] dark:text-green-300' : 'bg-gray-50 text-gray-400 dark:bg-white/[0.04] dark:text-slate-500'}`}><span>{ok ? '✅' : '○'}</span><span>{label}</span></li>)}
+      </ul>
+    </section>
+
+    {data.language_quality && Object.keys(data.language_quality).length > 0 && (
+      <section id="language-quality" class="scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-1 text-gray-900 dark:text-white">{ui.labels.languageQuality}</h2>
+        <p class="text-sm text-gray-400 dark:text-slate-500 mb-4">不是“是否支持”，而是实际质量分层</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {Object.entries(data.language_quality).map(([code, tier]) => (
+            <div class="flex items-center gap-2 bg-gray-50 dark:bg-white/[0.06] rounded-lg px-3 py-2">
+              <span class={`w-2.5 h-2.5 rounded-full shrink-0 ${QUALITY_DOT[tier as string]}`}></span>
+              <span class="text-sm font-medium text-gray-700 dark:text-slate-200">{ui.languageName[code as keyof typeof ui.languageName] ?? code}</span>
+              <span class="text-xs text-gray-400 dark:text-slate-500 ml-auto">{ui.quality[tier as keyof typeof ui.quality] ?? tier}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {data.traffic_estimates && (
+      <div id="traffic" class="scroll-mt-24">
+        <TrafficOverview traffic={data.traffic_estimates} lang={lang} />
+      </div>
+    )}
+
+    {data.github_metrics && (
+      <div id="github" class="scroll-mt-24">
+        <GithubMetrics metrics={data.github_metrics} lang={lang} />
+      </div>
+    )}
+
+    <section id="pricing" class="scroll-mt-24">
+      <h2 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">{ui.labels.pricing}</h2>
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-2xl font-bold text-gray-900 dark:text-white">{price}</span>
+        <span class="text-sm text-gray-400 dark:text-slate-500 capitalize">{formatToolPricingModel(data.pricing.model, lang)}</span>
+        {data.pricing.has_free_tier && <span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full dark:bg-green-500/[0.10] dark:text-green-300">{ui.pricing.freeTierAvailable}</span>}
+      </div>
+      <a href={data.pricing.pricing_url} target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600 hover:underline dark:text-[#818cf8]">查看完整价格 →</a>
+
+      {(data.pricing.cost_per_1000_chars || data.pricing.cost_per_minute) && (
+        <div class="mt-5 bg-gray-50 border border-gray-200 rounded-xl p-4 dark:bg-white/[0.04] dark:border-white/[0.08]" id="cost-estimator">
+          <div class="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">{ui.labels.costEstimator}</div>
+          {data.pricing.cost_per_1000_chars && (
+            <label class="block text-xs text-gray-500 dark:text-slate-400">
+              每月生成字符数
+              <input type="number" id="est-chars" min="0" placeholder="例如 500000" class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none dark:border-white/[0.12] dark:bg-black/30 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-[#818cf8]/50" data-rate={data.pricing.cost_per_1000_chars} data-mode="chars" />
+            </label>
+          )}
+          {data.pricing.cost_per_minute && (
+            <label class="block text-xs text-gray-500 dark:text-slate-400">
+              每月通话分钟数
+              <input type="number" id="est-minutes" min="0" placeholder="例如 1000" class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none dark:border-white/[0.12] dark:bg-black/30 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-[#818cf8]/50" data-rate={data.pricing.cost_per_minute} data-mode="minutes" />
+            </label>
+          )}
+          <div id="est-result" class="mt-3 text-sm font-semibold text-gray-800 dark:text-slate-100 hidden">
+            预估成本：<span id="est-value"></span>/月
+          </div>
+          <p class="mt-2 text-xs text-gray-400 dark:text-slate-500">仅为粗略估算，预算前请以官方价格页为准。</p>
+        </div>
+      )}
+    </section>
+
+    {data.portability && (
+      <section id="lock-in" class="scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">{ui.labels.lockInRisk}</h2>
+        <div class={`flex items-start gap-3 rounded-xl p-4 border ${data.portability.voice_model_export ? 'border-green-200 bg-green-50 dark:border-green-500/25 dark:bg-green-500/[0.08]' : 'border-orange-200 bg-orange-50 dark:border-orange-500/25 dark:bg-orange-500/[0.08]'}`}>
+          <span class="text-xl shrink-0">{data.portability.voice_model_export ? '✅' : '⚠️'}</span>
+          <div>
+            <div class="text-sm font-semibold text-gray-800 dark:text-slate-100">
+              {data.portability.voice_model_export ? ui.labels.voiceModelExportable : ui.labels.voiceModelNotExportable}
+            </div>
+            {content.portabilityNotes && <div class="text-xs text-gray-600 dark:text-slate-400 mt-1">{content.portabilityNotes}</div>}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section id="guide" class="prose prose-gray max-w-none scroll-mt-24">
+      {content.body ? <Fragment set:html={renderLocalizedMarkdown(content.body)} /> : <Content />}
+    </section>
+
+    {alternativeTools.length > 0 && (
+      <section id="alternatives" class="scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">替代工具</h2>
+        <ul class="grid gap-3 sm:grid-cols-2">{alternativeTools.map((alt) => <ToolCard tool={alt} compact lang={lang} />)}</ul>
+      </section>
+    )}
+
+    {changelog.length > 0 && (
+      <section id="changelog" class="scroll-mt-24">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">近期变更</h2>
+        <ul class="divide-y divide-gray-100 dark:divide-white/[0.08]">
+          {changelog.map((entry) => (
+            <li class="py-3 flex items-start gap-4">
+              <time class="text-xs text-gray-400 dark:text-slate-500 pt-0.5 shrink-0 w-24">{entry.date}</time>
+              <div>
+                <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-white/[0.06] dark:text-slate-400">{ui.changeType[entry.change_type]}</span>
+                <p class="text-sm text-gray-700 dark:text-slate-300 mt-1">{changelogDescription(entry, lang)}</p>
+                {entry.source_url && <a href={entry.source_url} target="_blank" rel="noopener noreferrer" class="text-xs text-blue-500 hover:underline dark:text-[#818cf8]">来源 →</a>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <footer class="border-t border-gray-100 dark:border-white/[0.08] pt-6 flex items-center justify-between text-xs text-gray-400 dark:text-slate-500">
+      <span>最后核实：{data.verified_at.toISOString().slice(0, 10)}</span>
+      {editUrl && <a href={editUrl} target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 hover:underline dark:hover:text-slate-300">改进此页</a>}
+    </footer>
+      </article>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  const inputs = document.querySelectorAll<HTMLInputElement>('#est-chars, #est-minutes');
+  const result = document.getElementById('est-result');
+  const value = document.getElementById('est-value');
+
+  inputs.forEach((input) => {
+    input.addEventListener('input', () => {
+      const qty = parseFloat(input.value) || 0;
+      const rate = parseFloat(input.dataset.rate ?? '0');
+      const mode = input.dataset.mode;
+      if (!result || !value) return;
+      if (qty <= 0) {
+        result.classList.add('hidden');
+        return;
+      }
+      const cost = mode === 'chars' ? (qty / 1000) * rate : qty * rate;
+      value.textContent = `$${cost.toFixed(2)}`;
+      result.classList.remove('hidden');
+    });
+  });
+</script>

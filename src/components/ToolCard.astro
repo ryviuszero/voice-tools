@@ -1,0 +1,115 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { BADGE_CLASS, formatToolBadge, formatToolPrice, visibleToolBadges } from '../lib/tool-helpers';
+import { localizedPath, localizedToolData, t, type Language } from '../lib/i18n';
+import BookmarkToggle from './BookmarkToggle.astro';
+import ToolLogo from './ToolLogo.astro';
+
+interface Props {
+  tool: CollectionEntry<'tools'>;
+  compact?: boolean;
+  lang?: Language;
+  bookmarkListItem?: boolean;
+}
+
+const { tool, compact = false, lang = 'en', bookmarkListItem = false } = Astro.props;
+const { data } = tool;
+const price = formatToolPrice(tool, lang);
+const ui = t(lang);
+const content = localizedToolData(data, lang);
+const visibleBadges = visibleToolBadges(data.badges);
+---
+
+<li
+  class:list={['group relative glass-card flex flex-col', bookmarkListItem && 'hidden']}
+  data-tool-card
+  data-tool-slug={tool.slug}
+  data-bookmark-card={bookmarkListItem ? tool.slug : undefined}
+  data-pricing-model={data.pricing.model}
+  data-has-free-tier={String(data.pricing.has_free_tier)}
+  data-voice-cloning={String(data.capabilities.voice_cloning)}
+  data-multilingual={String(data.capabilities.multilingual)}
+  data-chinese={String(data.capabilities.chinese_support)}
+  data-realtime={String(data.capabilities.realtime_capable)}
+  data-open-source={String(data.capabilities.open_source)}
+  data-commercial={String(data.licensing.commercial_use)}
+  data-youtube={String(data.licensing.youtube_monetization)}
+  data-game-use={String(data.licensing.game_use)}
+  data-clone={String(data.licensing.voice_cloning_allowed)}
+>
+  <BookmarkToggle
+    slug={tool.slug}
+    lang={lang}
+    size={compact ? 'compact' : 'card'}
+    class={compact ? 'absolute right-2 top-2' : 'absolute right-3 top-3'}
+  />
+
+  <a href={localizedPath(`/tools/${tool.slug}`, lang)} class={`block flex-1 ${compact ? 'p-3 pr-10' : 'p-5 pb-2 pr-12'} space-y-3`}>
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <ToolLogo
+          src={data.logo}
+          alt={`${content.name} logo`}
+          size={compact ? 28 : 48}
+          class={`${compact ? 'w-7 h-7' : 'w-12 h-12'} object-contain shrink-0 border-2 border-[#2E2E2E] bg-[#242424]`}
+        />
+        <span class={`font-display font-black truncate transition-colors
+                      text-gray-900 group-hover:text-indigo-600
+                      dark:text-white dark:group-hover:text-[#818cf8]
+                      ${compact ? 'text-sm' : 'text-lg'}`}>
+          {content.name}
+        </span>
+      </div>
+      <div class="flex gap-1 flex-wrap justify-end shrink-0">
+        {visibleBadges.slice(0, 1).map((badge) => (
+          <span class={`taaft-mono text-[10px] px-1.5 py-0.5 border-2 border-black bg-[#FF6B00] text-black ${BADGE_CLASS[badge]}`}>
+            {formatToolBadge(badge, lang)}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <p class={`line-clamp-2 text-gray-500 dark:text-slate-400 ${compact ? 'text-xs' : 'text-sm'}`}>
+      {content.tagline}
+    </p>
+
+    <!-- Meta row -->
+    {!compact && (
+      <div class="border-t-2 border-[#2E2E2E] pt-3 flex items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-slate-500 flex-wrap taaft-mono uppercase">
+        <span class="text-[#FF6B00]">#{data.primary_category}</span>
+        <span>{price}</span>
+        {data.capabilities.realtime_capable && <span class="text-[#FAFAFA]">#{ui.labels.realTime}</span>}
+        {data.capabilities.open_source      && <span class="text-[#FAFAFA]">#{ui.labels.openSource}</span>}
+      </div>
+    )}
+
+    <!-- Gotchas hint -->
+    {!compact && content.gotchas.length > 0 && (
+      <div class="taaft-mono text-xs text-[#FF6B00] flex items-center gap-1">
+        <span>⚠️</span>
+        <span>{lang === 'zh'
+          ? `${content.gotchas.length} 个使用前注意`
+          : `${content.gotchas.length} thing${content.gotchas.length > 1 ? 's' : ''} to know before committing`}
+        </span>
+      </div>
+    )}
+  </a>
+
+  <!-- Compare button -->
+  {!compact && (
+    <div class="px-5 pb-5 pt-2 flex justify-end">
+      <button
+        class="compare-btn taaft-mono text-xs px-2 py-0.5 transition-colors
+               text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-indigo-300 bg-gray-50 hover:bg-gray-100
+               dark:text-slate-500 dark:hover:text-slate-200 dark:border-white/10 dark:hover:border-[#818cf8]/50 dark:bg-white/[0.03] dark:hover:bg-white/[0.07]"
+        data-slug={tool.slug}
+        data-name={content.name}
+        aria-label={`${ui.common.compare} ${content.name}`}
+      >
+        + {ui.common.compare}
+      </button>
+    </div>
+  )}
+</li>

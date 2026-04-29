@@ -1,0 +1,12 @@
+slug,name_en,name_zh,icon,user_group,description_en,description_zh,sort_order,featured
+tts,Text-to-Speech,文字转语音,mic,all,"Convert text into natural-sounding voice with AI",将文字转为自然流畅的人声,10,true
+voice_cloning,Voice Cloning,声音克隆,user-voice,all,"Clone any voice from a short audio sample",仅需短样本即可克隆任意声音,20,true
+stt,Speech-to-Text,语音转文字,file-text,all,"Transcribe audio into accurate text",将语音准确转写为文字,30,true
+dubbing,Dubbing & Translation,配音翻译,languages,creators,"Translate and dub videos into multiple languages",将视频翻译并配音为多种语言,40,true
+audio_cleanup,Audio Cleanup,音频清理,wand-2,creators,"Remove noise and enhance audio quality",去除噪音并提升音频质量,50,false
+creator_editing,Creator Editing,创作者剪辑,sparkles,creators,"Edit, repurpose, and package creator audio or video workflows",剪辑、拆条并打包创作者音视频工作流,55,true
+voice_changer,Voice Changer,变声器,shuffle,creators,"Real-time voice modification for streamers and gamers",为主播与玩家提供实时变声,60,false
+sound_effects,Sound Effects,音效生成,music,all,"Generate sound effects from text descriptions",通过文字描述生成音效,70,false
+voice_agent_platform,Voice Agent Platform,Voice Agent 平台,bot,voice_ai_builders,"All-in-one platforms to build conversational voice apps",构建对话式语音应用的一站式平台,100,true
+realtime_infrastructure,Realtime Infrastructure,实时语音基础设施,zap,voice_ai_builders,"Low-latency audio transport for voice AI",为 Voice AI 提供低延迟音频传输,110,false
+conversation_framework,Conversation Framework,对话编排框架,workflow,voice_ai_builders,"Open-source frameworks to orchestrate voice conversations",开源对话编排框架,120,false

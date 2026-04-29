@@ -1,0 +1,354 @@
+---
+import { alternatePath, localizedPath, t, type Language } from '../lib/i18n';
+
+interface Props {
+  lang?: Language;
+  activeNavGroup?: 'creators' | 'game_devs' | 'voice_ai_builders';
+}
+
+const { lang = 'en', activeNavGroup } = Astro.props;
+const pathname = Astro.url.pathname;
+const ui = t(lang);
+const href = (path: string) => localizedPath(path, lang);
+const isActive = (path: string) => {
+  const localized = href(path);
+  return pathname === localized || pathname.startsWith(localized + '/');
+};
+const isGroupActive = (path: string, group: Props['activeNavGroup']) => activeNavGroup === group || isActive(path);
+const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
+---
+<script is:inline>
+  (() => {
+    try {
+      const value = localStorage.getItem('vtd_nav_group');
+      if (['creators', 'game_devs', 'voice_ai_builders'].includes(value)) {
+        document.documentElement.dataset.navGroupMode = 'collapsed';
+        document.documentElement.dataset.navGroupValue = value;
+      } else {
+        document.documentElement.dataset.navGroupMode = 'full';
+      }
+    } catch {
+      document.documentElement.dataset.navGroupMode = 'full';
+    }
+  })();
+</script>
+<header class="border-b border-gray-200 bg-white/95 backdrop-blur-xl sticky top-0 z-50
+               dark:border-white/10 dark:bg-black/80">
+  <nav class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <a href={href('/')} class="font-bold text-base tracking-tight shrink-0 text-gradient-brand">
+      {lang === 'zh' ? '语音工具' : 'Voice Tools'}
+    </a>
+
+    <div class="hidden sm:flex items-center gap-5 text-sm font-medium" data-nav-group-full>
+      <a href={href('/for-creators')}
+         data-nav-group-option="creators"
+         aria-current={isGroupActive('/for-creators', 'creators') ? 'page' : undefined}
+         class={`transition-colors hover:underline ${isGroupActive('/for-creators', 'creators')
+           ? 'text-orange-500 dark:text-[#fb923c]'
+           : 'text-gray-600 hover:text-orange-500 dark:text-slate-400 dark:hover:text-[#fb923c]'}`}>
+        🎬 {ui.nav.creators}
+      </a>
+      <a href={href('/for-game-devs')}
+         data-nav-group-option="game_devs"
+         aria-current={isGroupActive('/for-game-devs', 'game_devs') ? 'page' : undefined}
+         class={`transition-colors hover:underline ${isGroupActive('/for-game-devs', 'game_devs')
+           ? 'text-green-600 dark:text-[#4ade80]'
+           : 'text-gray-600 hover:text-green-600 dark:text-slate-400 dark:hover:text-[#4ade80]'}`}>
+        🎮 {ui.nav.gameDevs}
+      </a>
+      <a href={href('/for-voice-ai')}
+         data-nav-group-option="voice_ai_builders"
+         aria-current={isGroupActive('/for-voice-ai', 'voice_ai_builders') ? 'page' : undefined}
+         class={`transition-colors hover:underline ${isGroupActive('/for-voice-ai', 'voice_ai_builders')
+           ? 'text-indigo-600 dark:text-[#818cf8]'
+           : 'text-gray-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-[#818cf8]'}`}>
+        🤖 {ui.nav.voiceAi}
+      </a>
+    </div>
+
+    <details class="hidden sm:hidden relative text-sm font-medium" data-nav-group-collapsed>
+      <summary class="list-none cursor-pointer select-none rounded-md border border-gray-200 bg-white px-3 py-1.5 text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-white/15 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/30 dark:hover:text-white">
+        <span data-nav-group-current>🎬 {ui.nav.creators}</span>
+        <svg
+          class="nav-group-chevron ml-2 inline-block h-3.5 w-3.5 align-[-2px] text-gray-400 transition-transform duration-150 dark:text-slate-500"
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </summary>
+      <div class="absolute left-0 top-full mt-2 w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-white/15 dark:bg-[#0f1324]">
+        <a href={href('/for-creators')}
+           data-nav-group-option="creators"
+           class="block px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white">
+          🎬 {ui.nav.creators}
+        </a>
+        <a href={href('/for-game-devs')}
+           data-nav-group-option="game_devs"
+           class="block px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white">
+          🎮 {ui.nav.gameDevs}
+        </a>
+        <a href={href('/for-voice-ai')}
+           data-nav-group-option="voice_ai_builders"
+           class="block px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white">
+          🤖 {ui.nav.voiceAi}
+        </a>
+      </div>
+    </details>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <!-- Language switcher -->
+      <a href={languageHref}
+         hreflang={lang === 'en' ? 'zh-CN' : 'en'}
+         class="text-sm text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-gray-400 hover:text-gray-900 transition-colors
+                dark:text-slate-400 dark:border-white/15 dark:bg-white/[0.04] dark:hover:border-white/30 dark:hover:text-white">
+        {ui.nav.language}
+      </a>
+
+      <!-- Search trigger -->
+      <button id="search-trigger"
+              aria-label={ui.nav.search}
+              class="flex items-center gap-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400 hover:text-gray-900 transition-colors
+                     dark:text-slate-400 dark:border-white/15 dark:bg-white/[0.04] dark:hover:border-white/30 dark:hover:text-white">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="hidden sm:inline">{ui.nav.search}</span>
+        <kbd class="hidden sm:inline text-xs font-mono text-gray-400 dark:text-slate-600">/</kbd>
+      </button>
+
+      <!-- Submit -->
+      <a href={href('/submit')}
+         class="btn-neon btn-neon-voiceai inline-flex text-sm font-medium px-3 py-1.5 rounded-lg transition-colors
+                bg-indigo-600 text-white hover:bg-indigo-700
+                dark:bg-[#818cf8] dark:hover:bg-[#6366f1]">
+        {ui.nav.submit}
+      </a>
+    </div>
+  </nav>
+</header>
+
+<style>
+  html[data-nav-group-mode='collapsed'] [data-nav-group-full] {
+    display: none;
+  }
+
+  html[data-nav-group-mode='collapsed'] [data-nav-group-collapsed] {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    html[data-nav-group-mode='collapsed'] [data-nav-group-collapsed] {
+      display: block;
+    }
+  }
+
+  [data-nav-group-collapsed] summary::-webkit-details-marker {
+    display: none;
+  }
+
+  [data-nav-group-collapsed][open] .nav-group-chevron {
+    transform: rotate(180deg);
+  }
+</style>
+
+<!-- Pagefind search modal -->
+<div id="search-modal" class="hidden fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm dark:bg-black/60 dark:backdrop-blur-md" role="dialog" aria-modal="true">
+  <div class="max-w-xl mx-auto mt-20 px-4">
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden relative dark:bg-[#0f1324]">
+      <div id="pagefind-search-container" class="p-4 pr-12"></div>
+      <div id="pagefind-fallback" class="hidden p-4 space-y-3">
+        <label class="mr-8 flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 focus-within:border-indigo-400
+                      dark:border-white/15 dark:bg-white/[0.04] dark:focus-within:border-[#818cf8]">
+          <svg class="w-4 h-4 shrink-0 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span class="sr-only">{lang === 'zh' ? '搜索语音 AI 工具' : 'Search voice AI tools'}</span>
+          <input
+            id="fallback-search-input"
+            type="search"
+            class="min-w-0 flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none
+                   dark:text-slate-100 dark:placeholder:text-slate-500"
+            placeholder={lang === 'zh' ? '搜索语音 AI 工具...' : 'Search voice AI tools...'}
+            autocomplete="off"
+          />
+        </label>
+        <div id="fallback-search-results" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.08]"></div>
+        <p class="text-xs text-gray-400 dark:text-slate-500">
+          {lang === 'zh' ? '当前环境没有静态搜索索引，结果会从工具 JSON 中匹配。' : 'Static search index is not available in this environment, so results are matched from the tools JSON.'}
+        </p>
+      </div>
+      <button id="search-close"
+              class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded text-xs leading-none text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              aria-label={lang === 'zh' ? '关闭搜索' : 'Close search'}>✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Audience nav preference ──────────────────────────────
+  const NAV_GROUP_KEY = 'vtd_nav_group';
+  const navGroups: Record<string, string> = {
+    creators:          `🎬 ${document.documentElement.lang.startsWith('zh') ? '创作者' : 'Creators'}`,
+    game_devs:         `🎮 ${document.documentElement.lang.startsWith('zh') ? '游戏开发者' : 'Game Devs'}`,
+    voice_ai_builders: `🤖 ${document.documentElement.lang.startsWith('zh') ? 'Voice AI 开发者' : 'Voice AI'}`,
+  };
+
+  function getStoredNavGroup() {
+    const value = localStorage.getItem(NAV_GROUP_KEY);
+    return value && Object.prototype.hasOwnProperty.call(navGroups, value) ? value : '';
+  }
+
+  function applyStoredNavGroup() {
+    const group = getStoredNavGroup();
+    const fullNav = document.querySelector<HTMLElement>('[data-nav-group-full]');
+    const collapsedNav = document.querySelector<HTMLElement>('[data-nav-group-collapsed]');
+    const current = document.querySelector<HTMLElement>('[data-nav-group-current]');
+    if (!fullNav || !collapsedNav || !current) return;
+
+    document.documentElement.dataset.navGroupMode = group ? 'collapsed' : 'full';
+    if (group) document.documentElement.dataset.navGroupValue = group;
+    else delete document.documentElement.dataset.navGroupValue;
+    fullNav.classList.toggle('sm:flex', !group);
+    fullNav.classList.toggle('sm:hidden', Boolean(group));
+    collapsedNav.classList.toggle('sm:hidden', !group);
+    collapsedNav.classList.toggle('sm:block', Boolean(group));
+    if (!group) return;
+
+    current.textContent = navGroups[group];
+    document.querySelectorAll<HTMLElement>('[data-nav-group-option]').forEach((option) => {
+      const isSelected = option.dataset.navGroupOption === group;
+      option.classList.toggle('font-semibold', isSelected);
+      if (isSelected) option.setAttribute('aria-current', 'page');
+      else option.removeAttribute('aria-current');
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-nav-group-option]').forEach((option) => {
+    option.addEventListener('click', () => {
+      const group = option.dataset.navGroupOption;
+      if (group && Object.prototype.hasOwnProperty.call(navGroups, group)) {
+        localStorage.setItem(NAV_GROUP_KEY, group);
+      }
+    });
+  });
+  applyStoredNavGroup();
+
+  // ── Search modal ──────────────────────────────────────────
+  const modal    = document.getElementById('search-modal')!;
+  const closeBtn = document.getElementById('search-close')!;
+  const pagefindContainer = document.getElementById('pagefind-search-container')!;
+  const fallback      = document.getElementById('pagefind-fallback')!;
+  const fallbackInput = document.getElementById('fallback-search-input') as HTMLInputElement;
+  const fallbackResults = document.getElementById('fallback-search-results')!;
+
+  type ToolSearchRecord = {
+    slug: string; name: string; tagline: string; primary_category: string;
+    i18n?: { zh?: { name?: string; tagline?: string } };
+  };
+
+  const runtimeImport = new Function('url', 'return import(url)') as (url: string) => Promise<any>;
+  let uiLoaded = false;
+  let cssLoaded = false;
+  let fallbackTools: ToolSearchRecord[] | null = null;
+
+  function closeSearch() { modal.classList.add('hidden'); }
+
+  function syncPagefindTerm(term: string) {
+    const input = document.querySelector('#pagefind-search-container input') as HTMLInputElement | null;
+    if (!input) return;
+    input.focus();
+    if (!term || input.value === term) return;
+    input.value = term;
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: term }));
+  }
+
+  async function loadFallbackTools() {
+    if (fallbackTools) return fallbackTools;
+    try {
+      const res = await fetch('/api/tools.json');
+      fallbackTools = await res.json() as ToolSearchRecord[];
+    } catch { fallbackTools = []; }
+    return fallbackTools ?? [];
+  }
+
+  function escapeHtml(value: string) {
+    return value.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!);
+  }
+
+  async function renderFallback(term = '') {
+    pagefindContainer.classList.add('hidden');
+    fallback.classList.remove('hidden');
+    fallbackInput.value = term;
+    fallbackInput.focus();
+    const query = term.trim().toLowerCase();
+    const tools = await loadFallbackTools();
+    const isZh = document.documentElement.lang.startsWith('zh');
+    const display = (t: ToolSearchRecord) => ({
+      name:    isZh ? t.i18n?.zh?.name    ?? t.name    : t.name,
+      tagline: isZh ? t.i18n?.zh?.tagline ?? t.tagline : t.tagline,
+    });
+    const matches = (query
+      ? tools.filter((t) => {
+          const d = display(t);
+          return [d.name, d.tagline, t.primary_category].join(' ').toLowerCase().includes(query);
+        })
+      : tools
+    ).slice(0, 8);
+    fallbackResults.innerHTML = matches.length
+      ? matches.map((t) => {
+          const d = display(t);
+          return `<a href="${isZh ? '/zh' : ''}/tools/${t.slug}" class="block py-3 pr-8 hover:bg-gray-50 dark:hover:bg-white/[0.05] rounded-lg">
+            <span class="block text-sm font-medium text-gray-900 dark:text-slate-100">${escapeHtml(d.name)}</span>
+            <span class="block text-xs text-gray-500 dark:text-slate-400">${escapeHtml(d.tagline)}</span>
+          </a>`;
+        }).join('')
+      : `<p class="py-6 text-center text-sm text-gray-500 dark:text-slate-500">${isZh ? '没有找到匹配工具。' : 'No matching tools found.'}</p>`;
+  }
+
+  function loadPagefindStyles() {
+    if (cssLoaded || document.querySelector('link[data-pagefind-ui]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet'; link.href = '/pagefind/pagefind-ui.css';
+    link.dataset.pagefindUi = 'true';
+    document.head.append(link);
+    cssLoaded = true;
+  }
+
+  async function openSearch(term = '') {
+    modal.classList.remove('hidden');
+    pagefindContainer.classList.remove('hidden');
+    if (!uiLoaded) {
+      try {
+        const mod = await runtimeImport('/pagefind/pagefind-ui.js');
+        if (mod?.PagefindUI) {
+          loadPagefindStyles();
+          new mod.PagefindUI({ element: '#pagefind-search-container', showSubResults: false });
+          uiLoaded = true;
+        }
+      } catch { await renderFallback(term); return; }
+    }
+    fallback.classList.add('hidden');
+    requestAnimationFrame(() => syncPagefindTerm(term));
+  }
+
+  document.querySelectorAll('#search-trigger, .open-search').forEach((el) => {
+    el.addEventListener('click', () => openSearch());
+  });
+  document.querySelectorAll<HTMLInputElement>('.open-search-input').forEach((input) => {
+    input.addEventListener('focus', () => openSearch(input.value));
+    input.addEventListener('input', () => openSearch(input.value));
+  });
+  fallbackInput.addEventListener('input', () => renderFallback(fallbackInput.value));
+  closeBtn.addEventListener('click', closeSearch);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeSearch(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && !['INPUT','TEXTAREA'].includes((e.target as Element).tagName)) {
+      e.preventDefault(); openSearch();
+    }
+    if (e.key === 'Escape') closeSearch();
+  });
+</script>

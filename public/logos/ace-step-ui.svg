@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">ACE-Step UI logo</title>
+  <desc id="desc">Abstract local music generation logo with ACE letters and waveform bars.</desc>
+  <rect width="128" height="128" rx="26" fill="#111827"/>
+  <circle cx="100" cy="28" r="12" fill="#22d3ee"/>
+  <path d="M27 86l21-48h11l21 48H66l-4-10H44l-4 10H27zm21-22h10l-5-13-5 13z" fill="#f8fafc"/>
+  <path d="M81 83V45h25v10H93v5h11v9H93v5h14v9H81z" fill="#f8fafc"/>
+  <rect x="24" y="96" width="10" height="12" rx="3" fill="#fb923c"/>
+  <rect x="40" y="91" width="10" height="17" rx="3" fill="#facc15"/>
+  <rect x="56" y="85" width="10" height="23" rx="3" fill="#22c55e"/>
+  <rect x="72" y="91" width="10" height="17" rx="3" fill="#38bdf8"/>
+  <rect x="88" y="96" width="10" height="12" rx="3" fill="#a78bfa"/>
+</svg>

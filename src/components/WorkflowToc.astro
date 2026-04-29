@@ -1,0 +1,206 @@
+---
+type TocItem = {
+  href: string;
+  label: string;
+  children?: TocItem[];
+};
+
+interface Props {
+  items: TocItem[];
+  label: string;
+  ariaLabel: string;
+}
+
+const { items, label, ariaLabel } = Astro.props;
+---
+
+<nav
+  class="sticky top-24 border-l border-gray-200 pl-4 text-sm dark:border-white/[0.08]"
+  aria-label={ariaLabel}
+  data-workflow-toc
+>
+  <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+    {label}
+  </div>
+  <ol class="space-y-2">
+    {items.map((item) => (
+      <li data-workflow-toc-item>
+        <a
+          href={item.href}
+          class="workflow-toc-link block rounded-md px-2 py-1.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:text-slate-500 dark:hover:bg-white/[0.05] dark:hover:text-slate-100"
+          data-workflow-toc-link
+          data-toc-target={item.href.slice(1)}
+        >
+          {item.label}
+        </a>
+        {item.children && item.children.length > 0 && (
+          <ol
+            class="workflow-toc-branch mt-1 space-y-1 border-l border-gray-100 pl-3 dark:border-white/[0.06]"
+            data-workflow-toc-nested
+            hidden
+          >
+            {item.children.map((child) => (
+              <li data-workflow-toc-item>
+                <a
+                  href={child.href}
+                  class="workflow-toc-link block rounded-md px-2 py-1 text-xs leading-snug text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-800 dark:text-slate-500 dark:hover:bg-white/[0.05] dark:hover:text-slate-200"
+                  data-workflow-toc-link
+                  data-toc-target={child.href.slice(1)}
+                >
+                  {child.label}
+                </a>
+                {child.children && child.children.length > 0 && (
+                  <ol
+                    class="workflow-toc-branch mt-1 space-y-1 pl-3"
+                    data-workflow-toc-nested
+                    hidden
+                  >
+                    {child.children.map((grandchild) => (
+                      <li data-workflow-toc-item>
+                        <a
+                          href={grandchild.href}
+                          class="workflow-toc-link block rounded-md px-2 py-1 text-[11px] leading-snug text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-slate-600 dark:hover:bg-white/[0.05] dark:hover:text-slate-300"
+                          data-workflow-toc-link
+                          data-toc-target={grandchild.href.slice(1)}
+                        >
+                          {grandchild.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<script is:inline>
+  (() => {
+    const initWorkflowToc = () => {
+      const navs = document.querySelectorAll('[data-workflow-toc]');
+
+      navs.forEach((nav) => {
+        const links = Array.from(nav.querySelectorAll('[data-workflow-toc-link]'));
+        const branches = Array.from(nav.querySelectorAll('[data-workflow-toc-nested]'));
+        const targets = links
+          .map((link) => {
+            const id = link.getAttribute('data-toc-target');
+            return id ? { id, link, element: document.getElementById(id) } : null;
+          })
+          .filter((target) => target && target.element);
+
+        if (targets.length === 0) return;
+
+        const revealAncestors = (link) => {
+          const childBranch = link.parentElement?.querySelector(':scope > [data-workflow-toc-nested]');
+          if (childBranch) {
+            childBranch.hidden = false;
+            childBranch.setAttribute('data-expanded', 'true');
+          }
+
+          let branch = link.closest('[data-workflow-toc-nested]');
+
+          while (branch) {
+            branch.hidden = false;
+            branch.setAttribute('data-expanded', 'true');
+
+            const ownerItem = branch.parentElement;
+            const ownerLink = ownerItem?.querySelector(':scope > [data-workflow-toc-link]');
+            ownerLink?.setAttribute('data-ancestor-active', 'true');
+
+            branch = ownerItem?.parentElement?.closest('[data-workflow-toc-nested]');
+          }
+        };
+
+        const setActive = (activeId) => {
+          branches.forEach((branch) => {
+            branch.hidden = true;
+            branch.removeAttribute('data-expanded');
+          });
+
+          links.forEach((link) => {
+            const isActive = link.getAttribute('data-toc-target') === activeId;
+            link.setAttribute('data-active', String(isActive));
+            link.removeAttribute('data-ancestor-active');
+
+            if (isActive) {
+              link.setAttribute('aria-current', 'location');
+            } else {
+              link.removeAttribute('aria-current');
+            }
+          });
+
+          const activeLink = links.find((link) => link.getAttribute('data-toc-target') === activeId);
+          if (activeLink) revealAncestors(activeLink);
+        };
+
+        const getActiveId = () => {
+          const marker = Math.min(window.innerHeight * 0.3, 180);
+          let activeId = targets[0].id;
+
+          for (const target of targets) {
+            const top = target.element.getBoundingClientRect().top;
+            if (top <= marker) {
+              activeId = target.id;
+            } else {
+              break;
+            }
+          }
+
+          return activeId;
+        };
+
+        let frame = 0;
+        const updateActive = () => {
+          if (frame) return;
+          frame = window.requestAnimationFrame(() => {
+            frame = 0;
+            setActive(getActiveId());
+          });
+        };
+
+        updateActive();
+        window.addEventListener('scroll', updateActive, { passive: true });
+        window.addEventListener('resize', updateActive);
+        window.addEventListener('hashchange', updateActive);
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initWorkflowToc, { once: true });
+    } else {
+      initWorkflowToc();
+    }
+  })();
+</script>
+
+<style>
+  :global(.prose h2[id]),
+  :global(.prose h3[id]) {
+    scroll-margin-top: 6rem;
+  }
+
+  .workflow-toc-link[data-active='true'] {
+    background: rgba(249, 115, 22, 0.1);
+    color: rgb(17, 24, 39);
+    font-weight: 600;
+  }
+
+  .workflow-toc-link[data-ancestor-active='true'] {
+    color: rgb(55, 65, 81);
+    font-weight: 600;
+  }
+
+  :global(.dark) .workflow-toc-link[data-active='true'] {
+    background: rgba(251, 146, 60, 0.12);
+    color: rgb(255, 255, 255);
+  }
+
+  :global(.dark) .workflow-toc-link[data-ancestor-active='true'] {
+    color: rgb(226, 232, 240);
+  }
+</style>

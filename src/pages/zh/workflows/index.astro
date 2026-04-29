@@ -1,0 +1,69 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { localizedPath, localizedWorkflowData } from '../../../lib/i18n';
+
+const lang = 'zh';
+const workflows = await getCollection('workflows');
+const GROUP_META: Record<string, { label: string; emoji: string; color: string }> = {
+  creators: { label: '创作者', emoji: '🎬', color: 'creator' },
+  game_devs: { label: '游戏开发', emoji: '🎮', color: 'gamedev' },
+  voice_ai_builders: { label: 'Voice AI 开发者', emoji: '🤖', color: 'voiceai' },
+};
+
+const recommendationLabels: Record<string, string> = {
+  best_quality: '最佳质量',
+  best_value: '最佳性价比',
+  open_source: '开源方案',
+  production_default: '主流稳定方案',
+  fast_rising: '快速增长方案',
+  open_or_self_hosted: '开源或自托管',
+};
+---
+
+<BaseLayout title="工作流指南" description="面向创作者、游戏开发者和 Voice AI 开发者的语音 AI 工作流指南。" lang={lang}>
+  <main class="max-w-3xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-bold mb-2">工作流指南</h1>
+    <p class="text-gray-500 mb-10">常见语音 AI 场景的工具栈和步骤指南。</p>
+    <ul class="space-y-4">
+      {workflows.map((wf) => {
+        const meta = GROUP_META[wf.data.user_group];
+        const content = localizedWorkflowData(wf.data, lang);
+        return (
+          <li data-workflow-group={wf.data.user_group}>
+            <a href={localizedPath(`/workflows/${wf.slug}`, lang)} class="flex items-start gap-4 p-5 border border-gray-200 rounded-xl hover:border-gray-400 transition-colors group">
+              <div class={`text-2xl shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-${meta.color}-50`}>{meta.emoji}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <h2 class="min-w-0 font-semibold group-hover:underline">{content.title}</h2>
+                  <span class={`shrink-0 text-xs px-2 py-0.5 rounded-full bg-${meta.color}-100 text-${meta.color}-700`}>{meta.label}</span>
+                </div>
+                <p class="text-sm text-gray-500 mb-2">{content.description}</p>
+                {wf.data.tool_recommendations.length > 0 && (
+                  <div class="flex min-w-0 flex-wrap gap-1.5 mb-2">
+                    {wf.data.tool_recommendations.map((rec) => (
+                      <span class="inline-flex max-w-full min-w-0 items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-white/[0.08] dark:text-slate-300">
+                        <span class="shrink-0">{recommendationLabels[rec.tier] ?? rec.tier}：</span>
+                        <span class="min-w-0 truncate">{rec.i18n?.zh?.tool_name ?? rec.tool_name}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p class="text-xs text-gray-400">预算：${wf.data.budget_min_usd}–${wf.data.budget_max_usd}/月 · {wf.data.tools.length} 个工具</p>
+              </div>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </main>
+</BaseLayout>
+
+<style is:global>
+  html[data-nav-group-value='creators'] [data-workflow-group]:not([data-workflow-group='creators']),
+  html[data-nav-group-value='game_devs'] [data-workflow-group]:not([data-workflow-group='game_devs']),
+  html[data-nav-group-value='voice_ai_builders'] [data-workflow-group]:not([data-workflow-group='voice_ai_builders']) {
+    display: none;
+  }
+</style>

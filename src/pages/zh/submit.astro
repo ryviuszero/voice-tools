@@ -1,0 +1,39 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { githubUrl } from '../../lib/site-config';
+
+const lang = 'zh';
+const submitIssueUrl = githubUrl('/issues/new?template=submit-tool.yml');
+const contributingUrl = githubUrl('/blob/main/CONTRIBUTING.md');
+---
+
+<BaseLayout title="提交工具" description="向语音 AI 工具目录提交一个工具。" lang={lang}>
+  <main class="max-w-2xl mx-auto px-4 py-16 space-y-10">
+    <section>
+      <h1 class="text-3xl font-bold mb-3">提交工具</h1>
+      <p class="text-gray-500 text-lg">语音 AI 工具目录是开源项目。添加工具通常意味着提交 GitHub Issue 或 Pull Request。</p>
+    </section>
+    <section class="space-y-6">
+      <div class="bg-gray-50 rounded-2xl p-6 space-y-3">
+        <h2 class="font-semibold text-lg">方式一：提交 GitHub Issue</h2>
+        <p class="text-gray-600 text-sm">填写工具提交模板，维护者会创建 Markdown 文件并在 PR 中署名。</p>
+        {submitIssueUrl && <a href={submitIssueUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">打开 GitHub Issue →</a>}
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-6 space-y-3">
+        <h2 class="font-semibold text-lg">方式二：提交 Pull Request</h2>
+        <p class="text-gray-600 text-sm">创建 <code class="bg-gray-200 px-1.5 py-0.5 rounded text-xs">src/content/tools/your-tool-slug.md</code> 并填写 frontmatter。</p>
+        {contributingUrl && <a href={contributingUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-500 transition-colors">阅读贡献指南 →</a>}
+      </div>
+    </section>
+    <section>
+      <h2 class="font-semibold text-lg mb-4">收录标准</h2>
+      <ul class="space-y-2 text-sm text-gray-600">
+        <li>公开可访问，并仍在维护。</li>
+        <li>和创作者、游戏开发者或 Voice AI 开发者相关。</li>
+        <li>有可查的授权信息，即使限制较多也可以。</li>
+        <li>不收录停止维护、纯概念或邀请制工具。</li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>

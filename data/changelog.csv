@@ -1,0 +1,71 @@
+date,tool_slug,change_type,description,description_zh,source_url
+2026-04-15,elevenlabs,policy_change,"Free tier commercial-use restrictions reiterated; violating accounts may be limited","Free tier 重申不可商用要求，违规账号会被限制",https://elevenlabs.io/terms-of-use
+2026-03-15,elevenlabs,pricing_change,"Creator tier changed from $11 to $22; new subscribers still get 50% off the first month","Creator tier 价格从 $11 调整为 $22，新订户首月仍享 50% 折扣",https://elevenlabs.io/pricing
+2026-02-15,heygen,product_change,"Generative Credits renamed to Premium Credits with upfront cost estimates added","Generative Credits 重命名为 Premium Credits，新增 upfront 成本预估提示",https://help.heygen.com/en/articles/9204682
+2026-02-01,heygen,feature_added,"Audio dubbing without lip-sync became unlimited on all paid tiers","Audio dubbing（无 lip-sync 翻译）对所有付费 tier 完全无限制",https://tekpon.com/software/heygen/pricing/
+2026-01-10,heygen,product_change,"Team plan was replaced by Business plan; existing users keep legacy pricing","Team 套餐被 Business 套餐替代，老用户保留原价",https://help.heygen.com/en/articles/9204682
+2026-04-01,vapi,feature_added,"Burst pricing added, allowing agents to temporarily exceed concurrency limits up to 3x","新增 burst pricing，允许 agent 临时突破并发上限至 3 倍",https://vapi.ai/pricing
+2026-03-20,vapi,policy_change,"Twilio, Telnyx, and Vonage telephony costs are now called out separately for transparency","明确将 Twilio / Telnyx / Vonage telephony 费用单独标注，提升价格透明度",https://blog.dograh.com/vapi-pricing-breakdown-2025-plans-hidden-costs-what-to-expect/
+2026-04-10,f5-tts,model_release,"Community released OpenF5 TTS, trained on the F5 framework under Apache 2.0","社区发布 OpenF5 TTS，基于 F5 框架训练，采用 Apache 2.0 许可",https://github.com/SWivid/F5-TTS
+2026-03-01,f5-tts,feature_added,"Community fine-tunes expanded to Vietnamese, Arabic, Portuguese, and Russian","社区微调版本扩展到越南语、阿拉伯语、葡萄牙语、俄语",https://www.aibase.com/search/F5-TTS
+2026-04-26,suno,product_change,"Suno entry added: free plan is non-commercial; paid songs include commercial-use rights","新增 Suno 条目：免费版不可商用，付费生成歌曲授予商业使用权",https://suno.com/pricing
+2026-04-26,descript,feature_added,"Descript added for podcast cleanup, text editing, captions, and AI voice fixes","新增 Descript，用于播客清理、文字剪辑、字幕和 AI 补录",https://www.descript.com/price
+2026-04-26,adobe-podcast,feature_added,"Adobe Podcast added for low-friction Enhance Speech cleanup workflows","新增 Adobe Podcast，用于低门槛 Enhance Speech 人声清理流程",https://podcast.adobe.com/en/plans
+2026-04-26,opusclip,feature_added,"OpusClip added for long-to-short creator clipping workflows","新增 OpusClip，用于创作者长内容拆短视频流程",https://www.opusclip.io/pricing
+2026-04-26,riverside,feature_added,"Riverside added for recording, transcript editing, and Magic Clips workflows","新增 Riverside，用于录制、文字剪辑和 Magic Clips 工作流",https://riverside.com/pricing
+2026-04-26,youtube-auto-dubbing,feature_added,"YouTube Auto Dubbing added for YouTube-native multilingual audio tracks","新增 YouTube Auto Dubbing，用于 YouTube 原生多语言音轨",https://support.google.com/youtube/answer/15569972
+2026-04-26,podcastle,feature_added,"Podcastle added for browser podcast recording, editing, AI voices, and hosting","新增 Podcastle，用于浏览器播客录制、剪辑、AI voices 和托管",https://podcastle.ai/pricing
+2026-04-26,stable-audio-open,feature_added,"Stable Audio Open added for open short audio and sound design generation","新增 Stable Audio Open，用于开放短音频和声音设计生成",https://stability.ai/news/introducing-stable-audio-open
+2026-04-26,notebooklm,feature_added,"NotebookLM added for source-grounded Audio Overviews and knowledge briefings","新增 NotebookLM，用于基于资料来源的 Audio Overview 和知识简报",https://notebooklm.google
+2026-04-26,vibevoice,feature_added,"VibeVoice added for experimental long-form multi-speaker conversational TTS","新增 VibeVoice，用于实验性长篇多说话人对话式 TTS",https://github.com/microsoft/VibeVoice
+2026-04-26,retell-ai,feature_added,"Retell AI added for managed production phone and web voice agents","新增 Retell AI，用于托管式生产电话和网页 Voice Agent",https://www.retellai.com/pricing
+2026-04-26,livekit,feature_added,"LiveKit added as open-source realtime audio infrastructure for voice agents","新增 LiveKit，作为 Voice Agent 的开源实时音频基础设施",https://livekit.io/pricing
+2026-04-26,deepgram,feature_added,"Deepgram added for low-latency streaming speech-to-text pipelines","新增 Deepgram，用于低延迟流式语音识别链路",https://deepgram.com/pricing
+2026-04-26,cartesia,feature_added,"Cartesia added for low-latency streaming TTS in voice agents","新增 Cartesia，用于 Voice Agent 的低延迟流式 TTS",https://cartesia.ai/pricing
+2026-04-26,openai-realtime,feature_added,"OpenAI Realtime API added for native speech-to-speech voice agents","新增 OpenAI Realtime API，用于原生 speech-to-speech Voice Agent",https://platform.openai.com/docs/guides/realtime
+2026-04-26,pipecat,feature_added,"Pipecat added as an open-source realtime voice agent framework","新增 Pipecat，作为开源实时语音 Agent 框架",https://github.com/pipecat-ai/pipecat
+2026-04-26,silero-vad,feature_added,"Silero VAD added for open-source voice activity detection workflows","新增 Silero VAD，用于开源语音活动检测工作流",https://github.com/snakers4/silero-vad
+"2026-04-27","suno","pricing_change","Suno data reviewed from official source pages","Suno 数据已根据官方来源页面复核","https://suno.com/pricing"
+"2026-04-27","elevenlabs","product_change","ElevenLabs data reviewed from official source pages","ElevenLabs 数据已根据官方来源页面复核","https://elevenlabs.io/"
+2026-04-28,wellsaid,feature_added,"WellSaid added for licensed brand voiceover studio workflows","新增 WellSaid，用于授权品牌旁白 Studio 工作流",https://www.wellsaid.io/ai-voice-pricing
+2026-04-28,murf,feature_added,"Murf AI added for marketing, training, and product voiceover workflows","新增 Murf AI，用于营销、培训和产品旁白工作流",https://murf.ai/voice-cloning
+2026-04-28,resemble-ai,feature_added,"Resemble AI added for voice cloning, pay-as-you-go TTS, and governance workflows","新增 Resemble AI，用于声音克隆、按量 TTS 和治理工作流",https://www.resemble.ai/pricing
+2026-04-28,chatterbox,feature_added,"Chatterbox added as an open-source self-hosted TTS and voice cloning route","新增 Chatterbox，作为开源自托管 TTS 与声音克隆路线",https://github.com/resemble-ai/chatterbox
+2026-04-28,udio,feature_added,"Udio added for AI music generation, stems, and creator music exploration","新增 Udio，用于 AI 音乐生成、stems 和创作者配乐探索",https://www.udio.com/pricing
+2026-04-28,beatoven-ai,feature_added,"Beatoven.ai added for licensed AI background music and sound effects","新增 Beatoven.ai，用于有授权记录的 AI 背景音乐和音效",https://www.beatoven.ai/pricing
+2026-04-28,audiocraft,feature_added,"AudioCraft added as a self-hosted research route for music and sound generation","新增 AudioCraft，作为音乐和音效生成的自托管研究路线",https://github.com/facebookresearch/audiocraft
+2026-04-28,whisperx,feature_added,"WhisperX added for self-hosted transcription, word timestamps, and diarization","新增 WhisperX，用于自托管转写、词级时间戳和说话人分离",https://github.com/m-bain/whisperX
+2026-04-28,voicebox,feature_added,"Voicebox added as a local-first open-source voice studio for cloning TTS dictation and agents","新增 Voicebox 作为本地优先的开源声音克隆 TTS 听写和 Agent 语音工作室",https://github.com/jamiepine/voicebox
+2026-04-28,krisp,feature_added,"Added Krisp to strengthen category coverage","新增工具用于补齐分类覆盖",https://krisp.ai/
+2026-04-28,auphonic,feature_added,"Added Auphonic to strengthen category coverage","新增工具用于补齐分类覆盖",https://auphonic.com/
+2026-04-28,cleanvoice-ai,feature_added,"Added Cleanvoice AI to strengthen category coverage","新增工具用于补齐分类覆盖",https://cleanvoice.ai/
+2026-04-28,vocode,feature_added,"Added Vocode to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/vocodedev/vocode-python
+2026-04-28,rasa,feature_added,"Added Rasa to strengthen category coverage","新增工具用于补齐分类覆盖",https://opensource.rasa.com/
+2026-04-28,langgraph,feature_added,"Added LangGraph to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/langchain-ai/langgraph
+2026-04-28,botpress,feature_added,"Added Botpress to strengthen category coverage","新增工具用于补齐分类覆盖",https://botpress.com/en
+2026-04-28,audacity,feature_added,"Added Audacity to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.audacityteam.org/
+2026-04-28,rask-ai,feature_added,"Added Rask AI to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.rask.ai/
+2026-04-28,rws-ai-dubbing,feature_added,"Added RWS AI Dubbing to strengthen category coverage","新增 RWS AI Dubbing 用于补齐分类覆盖",https://www.rws.com/localization/services/translation-services/video-and-audio-translation/ai-dubbing-and-vo/
+2026-04-28,seamlessm4t,feature_added,"Added SeamlessM4T to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/facebookresearch/seamless_communication
+2026-04-28,daily,feature_added,"Added Daily to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.daily.co/
+2026-04-28,agora,feature_added,"Added Agora to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.agora.io/
+2026-04-28,twilio-voice,feature_added,"Added Twilio Voice to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.twilio.com/en-us/voice
+2026-04-28,mediasoup,feature_added,"Added mediasoup to strengthen category coverage","新增工具用于补齐分类覆盖",https://mediasoup.org/
+2026-04-28,janus-gateway,feature_added,"Added Janus Gateway to strengthen category coverage","新增工具用于补齐分类覆盖",https://janus.conf.meetecho.com/
+2026-04-28,optimizerai,feature_added,"Added OptimizerAI to strengthen category coverage","新增工具用于补齐分类覆盖",https://optimizerai.xyz/
+2026-04-28,assemblyai,feature_added,"Added AssemblyAI to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.assemblyai.com/
+2026-04-28,gladia,feature_added,"Added Gladia to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.gladia.io/
+2026-04-28,speechbrain,feature_added,"Added SpeechBrain to strengthen category coverage","新增工具用于补齐分类覆盖",https://speechbrain.github.io/
+2026-04-28,faster-whisper,feature_added,"Added faster-whisper to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/SYSTRAN/faster-whisper
+2026-04-28,bland-ai,feature_added,"Added Bland AI to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.bland.ai/
+2026-04-28,ten-framework,feature_added,"Added TEN Framework to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/TEN-framework/ten-framework
+2026-04-28,openvoiceos,feature_added,"Added OpenVoiceOS to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.openvoiceos.org/
+2026-04-28,playht,feature_added,"Added PlayHT to strengthen category coverage","新增工具用于补齐分类覆盖",https://play.ht/
+2026-04-28,kits-ai,feature_added,"Added Kits AI to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.kits.ai/
+2026-04-28,voicemod,feature_added,"Added Voicemod to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.voicemod.net/
+2026-04-28,voice-ai,feature_added,"Added Voice.ai to strengthen category coverage","新增工具用于补齐分类覆盖",https://voice.ai/
+2026-04-28,morphvox,feature_added,"Added MorphVOX to strengthen category coverage","新增工具用于补齐分类覆盖",https://screamingbee.com/morphvox-free-voice-changer
+2026-04-28,finevoice,feature_added,"Added FineVoice to strengthen category coverage","新增工具用于补齐分类覆盖","https://finevoice.ai/"
+2026-04-28,w-okada-voice-changer,feature_added,"Added W-Okada Voice Changer to strengthen category coverage","新增工具用于补齐分类覆盖","https://github.com/w-okada/voice-changer"
+2026-04-28,so-vits-svc,feature_added,"Added so-vits-svc to strengthen category coverage","新增工具用于补齐分类覆盖","https://github.com/svc-develop-team/so-vits-svc"
+2026-04-29,ace-step-ui,feature_added,"Added ACE-Step UI for local ACE-Step 1.5 music generation","新增 ACE-Step UI，用于 ACE-Step 1.5 本地音乐生成","https://github.com/fspecii/ace-step-ui"

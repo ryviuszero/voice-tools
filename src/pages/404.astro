@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The requested Voice Tools Directory page could not be found."
+>
+  <main class="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col justify-center px-4 py-16">
+    <p class="taaft-mono mb-3 text-sm uppercase text-[#FF6B00]">404</p>
+    <h1 class="mb-4 max-w-2xl text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+      Page not found
+    </h1>
+    <p class="mb-8 max-w-xl text-lg text-gray-500 dark:text-slate-400">
+      This page may have moved, or the tool you are looking for is not listed yet.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <a href="/" class="btn-neon rounded-lg bg-[#FF6B00] px-4 py-2 text-sm font-bold text-black">
+        Home
+      </a>
+      <a href="/workflows" class="rounded-lg border-2 border-[#2E2E2E] px-4 py-2 text-sm font-bold text-gray-900 dark:text-white">
+        Workflows
+      </a>
+      <a href="/submit" class="rounded-lg border-2 border-[#2E2E2E] px-4 py-2 text-sm font-bold text-gray-900 dark:text-white">
+        Submit a tool
+      </a>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,31 @@
+---
+import { getYouTubeEmbedUrl } from '../lib/youtube';
+
+interface Props {
+  url: string;
+  title: string;
+  heading?: string;
+  caption?: string;
+  id?: string;
+}
+
+const { url, title, heading, caption, id } = Astro.props;
+const embedUrl = getYouTubeEmbedUrl(url);
+---
+
+{embedUrl && (
+  <section id={id} class="scroll-mt-24">
+    {heading && <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{heading}</h2>}
+    <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.04] aspect-video">
+      <iframe
+        class="h-full w-full"
+        src={embedUrl}
+        title={title}
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      />
+    </div>
+    {caption && <p class="mt-2 text-xs text-gray-400 dark:text-slate-500">{caption}</p>}
+  </section>
+)}

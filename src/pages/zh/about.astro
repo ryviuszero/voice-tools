@@ -1,0 +1,35 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { localizedPath } from '../../lib/i18n';
+
+const lang = 'zh';
+const tools = await getCollection('tools');
+---
+
+<BaseLayout title="关于" description="关于语音 AI 工具目录。" lang={lang}>
+  <main class="max-w-2xl mx-auto px-4 py-16 space-y-10">
+    <section>
+      <h1 class="text-3xl font-bold mb-4">关于语音 AI 工具目录</h1>
+      <p class="text-gray-600 leading-relaxed">这是一个开源、社区维护的语音 AI 工具目录，面向内容创作者、游戏开发者和 Voice AI 开发者。我们重点整理授权、价格和真实能力，而不是简单堆砌工具列表。</p>
+    </section>
+    <section>
+      <h2 class="text-xl font-semibold mb-3">为什么做这个目录</h2>
+      <ul class="space-y-3 text-gray-600">
+        <li>授权信息更清楚：商用、YouTube 变现、游戏内使用、声音克隆是否允许。</li>
+        <li>价格信息更透明，并通过 <a href={localizedPath('/changelog', lang)} class="text-blue-600 hover:underline">变更日志</a> 跟踪重要变化。</li>
+        <li>AI 友好：提供结构化 JSON API 和 <a href="/llms.txt" class="text-blue-600 hover:underline">llms.txt</a>。</li>
+      </ul>
+    </section>
+    <section>
+      <h2 class="text-xl font-semibold mb-3">数据</h2>
+      <p class="text-gray-600 leading-relaxed mb-4">每个工具都人工维护，数据存放在公开 GitHub 仓库的 Markdown 文件中。无法核实的信息不会硬填。</p>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div class="bg-gray-50 rounded-xl p-4"><div class="text-3xl font-bold">{tools.length}</div><div class="text-sm text-gray-500 mt-1">工具</div></div>
+        <div class="bg-gray-50 rounded-xl p-4"><div class="text-3xl font-bold">10</div><div class="text-sm text-gray-500 mt-1">分类</div></div>
+        <div class="bg-gray-50 rounded-xl p-4"><div class="text-3xl font-bold">0</div><div class="text-sm text-gray-500 mt-1">付费收录</div></div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

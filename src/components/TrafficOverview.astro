@@ -1,0 +1,208 @@
+---
+type TrafficEstimate = {
+  source: string;
+  source_url: string;
+  captured_at: Date;
+  period_label: string;
+  visits_last_month?: number;
+  monthly_visits?: Array<{
+    month: string;
+    visits: number;
+    is_partial?: boolean;
+    note?: string;
+  }>;
+  change_mom_percent?: number;
+  bounce_rate_percent?: number;
+  pages_per_visit?: number;
+  avg_visit_duration?: string;
+  domain_created_at?: Date;
+  domain_created_source_url?: string;
+  global_rank?: number;
+  country_rank?: number;
+  country?: string;
+  note?: string;
+};
+
+type Lang = 'en' | 'zh';
+
+const { traffic, lang = 'en' } = Astro.props as { traffic: TrafficEstimate; lang?: Lang };
+const monthly = traffic.monthly_visits ?? [];
+const sortedMonthly = [...monthly].sort((a, b) => a.month.localeCompare(b.month));
+const derivedMomPercent = deriveMomPercent(sortedMonthly);
+const momPercent = traffic.change_mom_percent ?? derivedMomPercent;
+const bouncePercent = normalizePercent(traffic.bounce_rate_percent);
+const hasTrafficData = [
+  traffic.visits_last_month,
+  momPercent,
+  bouncePercent,
+  traffic.pages_per_visit,
+  traffic.global_rank,
+  traffic.country_rank,
+  traffic.domain_created_at,
+].some((value) => value !== undefined) || monthly.length > 0;
+const maxVisits = Math.max(...monthly.map((item) => item.visits), traffic.visits_last_month ?? 0, 1);
+const labels = {
+  en: {
+    title: 'Traffic Snapshot',
+    intro: `Estimated website traffic from ${traffic.source}`,
+    source: 'Source →',
+    visits: 'Visits',
+    mom: 'MoM',
+    lastMonth: 'last month',
+    bounce: 'Bounce',
+    estimated: 'estimated',
+    pagesPerVisit: 'Pages / Visit',
+    durationNA: 'duration N/A',
+    recentVisits: 'Recent monthly visits',
+    partial: 'partial',
+    domainRegistered: 'Domain registered',
+    globalRank: 'Global rank',
+    countryFallback: 'Country',
+    rank: 'rank',
+    captured: 'Captured',
+  },
+  zh: {
+    title: '流量概览',
+    intro: `估算网站流量来源：${traffic.source}`,
+    source: '来源 →',
+    visits: '访问量',
+    mom: '环比',
+    lastMonth: '较上月',
+    bounce: '跳出率',
+    estimated: '估算值',
+    pagesPerVisit: '每次访问页数',
+    durationNA: '时长 N/A',
+    recentVisits: '最近月访问量',
+    partial: '部分',
+    domainRegistered: '域名注册',
+    globalRank: '全球排名',
+    countryFallback: '国家',
+    rank: '排名',
+    captured: '采集日期',
+  },
+}[lang];
+
+function formatVisits(value?: number) {
+  if (value === undefined) return 'N/A';
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : 1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`;
+  return value.toLocaleString('en-US');
+}
+
+function formatPercent(value?: number) {
+  if (value === undefined) return 'N/A';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(1)}%`;
+}
+
+function formatUnsignedPercent(value?: number) {
+  if (value === undefined) return 'N/A';
+  return `${value.toFixed(1)}%`;
+}
+
+function normalizePercent(value?: number) {
+  if (value === undefined) return undefined;
+  return value > 0 && value <= 1 ? value * 100 : value;
+}
+
+function formatDuration(value?: string) {
+  if (!value) return labels.durationNA;
+  if (/^\d{1,2}:\d{2}(?::\d{2})?$/.test(value)) return value;
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return value;
+  const rounded = Math.round(seconds);
+  const minutes = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+function deriveMomPercent(monthlyVisits: NonNullable<TrafficEstimate['monthly_visits']>) {
+  const complete = monthlyVisits.filter((item) => !item.is_partial && item.visits > 0);
+  if (complete.length < 2) return undefined;
+  const previous = complete[complete.length - 2];
+  const current = complete[complete.length - 1];
+  if (!previous?.visits) return undefined;
+  return ((current.visits - previous.visits) / previous.visits) * 100;
+}
+
+function formatDate(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+---
+
+{hasTrafficData && (
+  <section class="taaft-data-panel rounded-xl p-5">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{labels.title}</h2>
+        <p class="text-sm text-gray-400 dark:text-slate-500">{labels.intro}</p>
+      </div>
+      <a href={traffic.source_url} target="_blank" rel="noopener noreferrer"
+         class="text-xs text-blue-600 dark:text-[#818cf8] hover:underline shrink-0">
+        {labels.source}
+      </a>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div class="taaft-stat-card bg-gray-50 dark:bg-white/[0.06] rounded-lg p-3">
+        <div class="text-xs text-gray-400 dark:text-slate-500">{labels.visits}</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-slate-100">{formatVisits(traffic.visits_last_month)}</div>
+        <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{traffic.period_label}</div>
+      </div>
+      <div class="taaft-stat-card bg-gray-50 dark:bg-white/[0.06] rounded-lg p-3">
+        <div class="text-xs text-gray-400 dark:text-slate-500">{labels.mom}</div>
+        <div class={`text-xl font-bold ${(momPercent ?? 0) >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {formatPercent(momPercent)}
+        </div>
+        <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{labels.lastMonth}</div>
+      </div>
+      <div class="taaft-stat-card bg-gray-50 dark:bg-white/[0.06] rounded-lg p-3">
+        <div class="text-xs text-gray-400 dark:text-slate-500">{labels.bounce}</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-slate-100">
+          {formatUnsignedPercent(bouncePercent)}
+        </div>
+        <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{labels.estimated}</div>
+      </div>
+      <div class="taaft-stat-card bg-gray-50 dark:bg-white/[0.06] rounded-lg p-3">
+        <div class="text-xs text-gray-400 dark:text-slate-500">{labels.pagesPerVisit}</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-slate-100">{traffic.pages_per_visit !== undefined ? traffic.pages_per_visit.toFixed(2) : 'N/A'}</div>
+        <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{formatDuration(traffic.avg_visit_duration)}</div>
+      </div>
+    </div>
+
+    {monthly.length > 0 && (
+      <div class="space-y-3">
+        <div class="text-sm font-medium text-gray-700 dark:text-slate-300">{labels.recentVisits}</div>
+        <div class="space-y-2">
+          {sortedMonthly.map((item) => (
+            <div>
+              <div class="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 mb-1">
+                <span>{item.month}{item.is_partial ? ` (${labels.partial})` : ''}</span>
+                <span>{formatVisits(item.visits)}</span>
+              </div>
+              <div class="taaft-bar-track h-2 rounded-full bg-gray-100 dark:bg-white/[0.08] overflow-hidden">
+                <div
+                  class="taaft-bar-fill h-full rounded-full"
+                  style={`width: ${Math.max(6, Math.round((item.visits / maxVisits) * 100))}%`}
+                ></div>
+              </div>
+              {item.note && <p class="mt-1 text-xs text-gray-400 dark:text-slate-500">{item.note}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-slate-500">
+      {traffic.domain_created_at && <span>{labels.domainRegistered}: {formatDate(traffic.domain_created_at)}</span>}
+      {traffic.global_rank && <span>{labels.globalRank}: #{traffic.global_rank.toLocaleString('en-US')}</span>}
+      {traffic.country_rank && <span>{traffic.country ?? labels.countryFallback} {labels.rank}: #{traffic.country_rank.toLocaleString('en-US')}</span>}
+      <span>{labels.captured}: {formatDate(traffic.captured_at)}</span>
+    </div>
+
+    {traffic.note && (
+      <p class="taaft-note mt-3 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-white/[0.04] rounded-lg p-3 border border-gray-100 dark:border-white/[0.08]">{traffic.note}</p>
+    )}
+  </section>
+)}

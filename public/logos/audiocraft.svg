@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="AudioCraft logo">
+  <rect width="128" height="128" rx="28" fill="#1d1b16"/>
+  <path d="M28 78c12-22 20-34 36-34s24 12 36 34" fill="none" stroke="#f6c65b" stroke-width="10" stroke-linecap="round"/>
+  <path d="M33 84h62" stroke="#7dd3fc" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="64" cy="44" r="10" fill="#f97316"/>
+  <text x="64" y="106" fill="#fff7df" font-family="Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">AC</text>
+</svg>

@@ -1,0 +1,112 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import FilterPanel from '../components/FilterPanel.astro';
+import { getCollection } from 'astro:content';
+import { loadCategories } from '../lib/data-loader';
+import { toolsByUserGroup } from '../lib/tool-helpers';
+
+const allTools   = await getCollection('tools');
+const tools      = toolsByUserGroup(allTools, 'voice_ai_builders');
+const voiceWorkflows = (await getCollection('workflows'))
+  .filter((workflow) => workflow.data.user_group === 'voice_ai_builders')
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+const categories = loadCategories().filter((c) => c.user_group === 'voice_ai_builders' || c.user_group === 'all');
+---
+
+<BaseLayout
+  title="Voice AI Tools for Voice AI Builders"
+  description="Tools for building conversational voice agents, AI companions, phone bots, and real-time voice AI applications."
+>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+
+    <!-- Hero -->
+    <section class="mb-10 pb-8 border-b border-gray-200 dark:border-white/[0.08]">
+      <div class="inline-flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-full mb-4
+                  text-indigo-600 bg-indigo-50 border border-indigo-200
+                  dark:text-[#818cf8] dark:bg-[#818cf8]/10 dark:border-[#818cf8]/20">
+        🤖 For Voice AI Builders
+      </div>
+      <h1 class="text-4xl font-bold tracking-tight mb-3 text-gray-900 dark:text-white">
+        Voice AI for Builders
+      </h1>
+      <p class="text-xl max-w-2xl mb-6 text-gray-500 dark:text-slate-400">
+        Orchestration platforms, real-time infrastructure, STT/TTS APIs, and
+        conversation frameworks for production voice AI products.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        {categories.slice(0, 5).map((cat) => (
+          <a href={`/category/${cat.slug}`}
+             class="text-sm px-3 py-1.5 rounded-full transition-colors
+                    border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600
+                    dark:border-white/15 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-[#818cf8]/50 dark:hover:text-[#818cf8]">
+            {cat.name_en}
+          </a>
+        ))}
+        <a href="/workflows/phone-agent-from-zero"
+           class="text-sm px-3 py-1.5 rounded-full transition-colors
+                  bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100
+                  dark:bg-[#818cf8]/10 dark:text-[#818cf8] dark:border-[#818cf8]/20 dark:hover:bg-[#818cf8]/15">
+          📋 Phone Agent from Zero →
+        </a>
+        <a href="/workflows"
+           class="text-sm px-3 py-1.5 rounded-full transition-colors
+                  bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100
+                  dark:bg-[#818cf8]/10 dark:text-[#818cf8] dark:border-[#818cf8]/20 dark:hover:bg-[#818cf8]/15">
+          🤖 Voice AI Workflows →
+        </a>
+      </div>
+    </section>
+
+    {voiceWorkflows.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Voice AI workflow guides</h2>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {voiceWorkflows.map((workflow) => (
+            <a href={`/workflows/${workflow.slug}`}
+               class="block glass-card glass-card-voiceai rounded-xl p-4 workflow-card"
+               data-bg-light="linear-gradient(135deg,rgba(99,102,241,0.08) 0%,rgba(99,102,241,0.02) 100%)"
+               data-bg-dark="linear-gradient(135deg,rgba(129,140,248,0.10) 0%,rgba(129,140,248,0.03) 100%)">
+              <div class="text-xs font-medium mb-2 text-indigo-600 dark:text-[#818cf8]">
+                {workflow.data.tool_recommendations.length} tool options · {workflow.data.sources.length} sources
+              </div>
+              <h3 class="font-semibold text-sm mb-1 text-gray-900 dark:text-white">{workflow.data.title}</h3>
+              <p class="text-xs text-gray-500 dark:text-slate-400">{workflow.data.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <div class="flex gap-8">
+      <FilterPanel />
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-gray-500 dark:text-slate-500">
+            <span id="tool-count">{tools.length}</span> tools
+          </p>
+        </div>
+        <ul class="grid gap-4 sm:grid-cols-2">
+          {tools.map((tool) => <ToolCard tool={tool} />)}
+        </ul>
+        {tools.length === 0 && (
+          <p class="text-center py-12 text-gray-400 dark:text-slate-500">
+            No tools yet. <a href="/submit" class="underline">Submit one →</a>
+          </p>
+        )}
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  function applyWorkflowBg() {
+    const isDark = document.documentElement.classList.contains('dark');
+    document.querySelectorAll<HTMLElement>('.workflow-card').forEach((card) => {
+      card.style.background = isDark ? (card.dataset.bgDark ?? '') : (card.dataset.bgLight ?? '');
+    });
+  }
+  applyWorkflowBg();
+  new MutationObserver(applyWorkflowBg).observe(document.documentElement, { attributeFilter: ['class'] });
+</script>

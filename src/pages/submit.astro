@@ -1,0 +1,80 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { githubUrl } from '../lib/site-config';
+
+const submitIssueUrl = githubUrl('/issues/new?template=submit-tool.yml');
+const contributingUrl = githubUrl('/blob/main/CONTRIBUTING.md');
+const reportIssueUrl = githubUrl('/issues/new?template=report-change.yml');
+---
+
+<BaseLayout
+  title="Submit a Tool"
+  description="Submit a voice AI tool to Voice Tools Directory."
+>
+  <main class="max-w-2xl mx-auto px-4 py-16 space-y-10">
+    <section>
+      <h1 class="text-3xl font-bold mb-3">Submit a Tool</h1>
+      <p class="text-gray-500 text-lg">
+        Voice Tools Directory is open source. Adding a tool means opening a GitHub PR — no account required beyond GitHub.
+      </p>
+    </section>
+
+    <section class="space-y-6">
+      <div class="bg-gray-50 rounded-2xl p-6 space-y-3">
+        <h2 class="font-semibold text-lg">Option 1 — Open a GitHub Issue</h2>
+        <p class="text-gray-600 text-sm">
+          Fill out the tool submission issue template. A maintainer will create the Markdown file
+          and credit you in the PR.
+        </p>
+        {submitIssueUrl && (
+          <a href={submitIssueUrl}
+             target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors">
+            Open Issue on GitHub →
+          </a>
+        )}
+      </div>
+
+      <div class="bg-gray-50 rounded-2xl p-6 space-y-3">
+        <h2 class="font-semibold text-lg">Option 2 — Open a Pull Request</h2>
+        <p class="text-gray-600 text-sm">
+          Create <code class="bg-gray-200 px-1.5 py-0.5 rounded text-xs">src/content/tools/your-tool-slug.md</code> and
+          fill in the frontmatter. Takes ~5 minutes. See the template below.
+        </p>
+        {contributingUrl && (
+          <a href={contributingUrl}
+             target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-500 transition-colors">
+            Read CONTRIBUTING.md →
+          </a>
+        )}
+      </div>
+    </section>
+
+    <section>
+      <h2 class="font-semibold text-lg mb-4">Inclusion criteria</h2>
+      <ul class="space-y-2 text-sm text-gray-600">
+        <li class="flex gap-2"><span class="text-green-600 shrink-0">✅</span> Actively maintained and publicly accessible</li>
+        <li class="flex gap-2"><span class="text-green-600 shrink-0">✅</span> Relevant to creators, game devs, or voice AI builders</li>
+        <li class="flex gap-2"><span class="text-green-600 shrink-0">✅</span> Licensing information available (even if restrictive)</li>
+        <li class="flex gap-2"><span class="text-red-400 shrink-0">✗</span> No defunct, vaporware, or invite-only tools</li>
+        <li class="flex gap-2"><span class="text-red-400 shrink-0">✗</span> No generic AI platforms (must have voice-specific functionality)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="font-semibold text-lg mb-4">Report outdated data</h2>
+      <p class="text-gray-600 text-sm mb-3">
+        Pricing, licensing, or capabilities changed? Open a "Report Change" issue.
+      </p>
+      {reportIssueUrl && (
+        <a href={reportIssueUrl}
+           target="_blank" rel="noopener noreferrer"
+           class="text-sm text-blue-600 hover:underline">
+          Report a change →
+        </a>
+      )}
+    </section>
+  </main>
+</BaseLayout>

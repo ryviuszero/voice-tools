@@ -1,0 +1,77 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import FilterPanel from '../../components/FilterPanel.astro';
+import { getCollection } from 'astro:content';
+import { loadCategories } from '../../lib/data-loader';
+import { toolsByUserGroup } from '../../lib/tool-helpers';
+import { localizedPath, localizedWorkflowData } from '../../lib/i18n';
+
+const lang = 'zh';
+const allTools = await getCollection('tools');
+const tools = toolsByUserGroup(allTools, 'voice_ai_builders');
+const voiceWorkflows = (await getCollection('workflows'))
+  .filter((workflow) => workflow.data.user_group === 'voice_ai_builders')
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+const categories = loadCategories().filter((c) => c.user_group === 'voice_ai_builders' || c.user_group === 'all');
+
+const workflowBgLight = 'linear-gradient(135deg,rgba(99,102,241,0.08) 0%,rgba(99,102,241,0.02) 100%)';
+const workflowBgDark = 'linear-gradient(135deg,rgba(255,79,0,0.10) 0%,rgba(197,192,177,0.05) 100%)';
+---
+
+<BaseLayout title="Voice AI 开发者工具" description="构建对话式语音 Agent、AI 陪伴、电话机器人和实时语音应用的工具。" lang={lang}>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <section class="mb-10 pb-8 border-b border-gray-100">
+      <div class="inline-flex items-center gap-2 text-sm font-medium text-voiceai-600 bg-voiceai-50 px-3 py-1 rounded-full mb-4">🤖 Voice AI 开发者</div>
+      <h1 class="text-4xl font-bold tracking-tight mb-3">Voice AI 开发者工具</h1>
+      <p class="text-xl text-gray-500 max-w-2xl mb-6">编排平台、实时基础设施、STT/TTS API 和对话框架，适合生产级语音 AI 产品。</p>
+      <div class="flex flex-wrap gap-3">
+        {categories.slice(0, 5).map((cat) => <a href={localizedPath(`/category/${cat.slug}`, lang)} class="text-sm px-3 py-1.5 border border-gray-200 rounded-full hover:border-voiceai-400 hover:text-voiceai-600 transition-colors">{cat.name_zh}</a>)}
+        <a href={localizedPath('/workflows/phone-agent-from-zero', lang)} class="text-sm px-3 py-1.5 bg-voiceai-50 text-voiceai-700 rounded-full hover:bg-voiceai-100 transition-colors">电话 Agent 从 0 到上线 →</a>
+        <a href={localizedPath('/workflows', lang)} class="text-sm px-3 py-1.5 bg-voiceai-50 text-voiceai-700 rounded-full hover:bg-voiceai-100 transition-colors">Voice AI 工作流 →</a>
+      </div>
+    </section>
+    {voiceWorkflows.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold mb-4">Voice AI 工作流指南</h2>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {voiceWorkflows.map((workflow) => {
+            const content = localizedWorkflowData(workflow.data, lang);
+            return (
+              <a
+                href={localizedPath(`/workflows/${workflow.slug}`, lang)}
+                class="block glass-card glass-card-voiceai rounded-xl p-4 workflow-card"
+                data-bg-light={workflowBgLight}
+                data-bg-dark={workflowBgDark}
+              >
+                <div class="text-xs text-voiceai-600 font-medium mb-2">{workflow.data.tool_recommendations.length} 个工具选项 · {workflow.data.sources.length} 个来源</div>
+                <h3 class="font-semibold text-sm mb-1 text-gray-900 dark:text-white">{content.title}</h3>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{content.description}</p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
+    <div class="flex gap-8">
+      <FilterPanel lang={lang} />
+      <div class="flex-1 min-w-0">
+        <p class="text-sm text-gray-500 mb-4"><span id="tool-count">{tools.length}</span> 个工具</p>
+        <ul class="grid gap-4 sm:grid-cols-2">{tools.map((tool) => <ToolCard tool={tool} lang={lang} />)}</ul>
+        {tools.length === 0 && <p class="text-gray-400 text-center py-12">暂时没有工具。<a href={localizedPath('/submit', lang)} class="underline">提交一个 →</a></p>}
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  function applyWorkflowBg() {
+    const isDark = document.documentElement.classList.contains('dark');
+    document.querySelectorAll<HTMLElement>('.workflow-card').forEach((card) => {
+      card.style.background = isDark ? (card.dataset.bgDark ?? '') : (card.dataset.bgLight ?? '');
+    });
+  }
+  applyWorkflowBg();
+  new MutationObserver(applyWorkflowBg).observe(document.documentElement, { attributeFilter: ['class'] });
+</script>

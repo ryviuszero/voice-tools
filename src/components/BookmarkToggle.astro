@@ -1,0 +1,177 @@
+---
+import type { Language } from '../lib/i18n';
+
+interface Props {
+  slug: string;
+  lang?: Language;
+  size?: 'compact' | 'card' | 'detail';
+  class?: string;
+}
+
+const { slug, lang = 'en', size = 'card', class: extraClass = '' } = Astro.props;
+const bookmarkAddLabel = lang === 'zh' ? '收藏' : 'Bookmark';
+const bookmarkRemoveLabel = lang === 'zh' ? '取消收藏' : 'Remove bookmark';
+
+const sizeClass = {
+  compact: 'h-7 w-7',
+  card: 'h-8 w-8',
+  detail: 'h-10 w-10',
+}[size];
+
+const iconClass = {
+  compact: 'h-3.5 w-3.5',
+  card: 'h-4 w-4',
+  detail: 'h-5 w-5',
+}[size];
+---
+
+<button
+  type="button"
+  class:list={[
+    'bookmark-toggle z-10 inline-flex shrink-0 items-center justify-center rounded-full border bg-white/90 text-gray-400 shadow-sm transition-colors hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600 dark:bg-white/[0.06] dark:text-slate-400 dark:hover:border-orange-500/35 dark:hover:bg-orange-500/12 dark:hover:text-orange-300',
+    sizeClass,
+    extraClass,
+  ]}
+  data-bookmark-toggle
+  data-slug={slug}
+  data-label-add={bookmarkAddLabel}
+  data-label-remove={bookmarkRemoveLabel}
+  aria-label={bookmarkAddLabel}
+  aria-pressed="false"
+  title={bookmarkAddLabel}
+>
+  <svg class={iconClass} viewBox="0 0 24 24" aria-hidden="true">
+    <path class="bookmark-solid" fill="currentColor" d="M6.75 3A2.75 2.75 0 0 0 4 5.75v14.13a1 1 0 0 0 1.58.81L12 16.08l6.42 4.61a1 1 0 0 0 1.58-.81V5.75A2.75 2.75 0 0 0 17.25 3H6.75Z" />
+    <path class="bookmark-outline" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.75 4.5h10.5c.69 0 1.25.56 1.25 1.25v12.2l-5.63-4.04a1.5 1.5 0 0 0-1.74 0L5.5 17.95V5.75c0-.69.56-1.25 1.25-1.25Z" />
+  </svg>
+</button>
+
+<script>
+  const BOOKMARK_STORAGE_KEY = 'voice-tools:session-bookmarks';
+
+  type BookmarkWindow = Window & { __voiceToolsBookmarksInitialized?: boolean };
+
+  function readBookmarks(): Set<string> {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(BOOKMARK_STORAGE_KEY) || '[]');
+      return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  function writeBookmarks(bookmarks: Set<string>) {
+    try {
+      sessionStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify([...bookmarks]));
+    } catch {
+      // Ignore storage failures so the button remains harmless in restricted browsers.
+    }
+  }
+
+  function labelFor(button: HTMLElement, active: boolean): string {
+    return active
+      ? button.dataset.labelRemove || 'Remove bookmark'
+      : button.dataset.labelAdd || 'Bookmark';
+  }
+
+  function formatCount(counter: HTMLElement, count: number): string {
+    const template = count === 1
+      ? counter.dataset.countTemplateOne || counter.dataset.countTemplate || '({count} saved)'
+      : counter.dataset.countTemplate || '({count} saved)';
+    return template.replace('{count}', String(count));
+  }
+
+  function syncBookmarkUi() {
+    const bookmarks = readBookmarks();
+
+    document.querySelectorAll<HTMLElement>('[data-bookmark-toggle]').forEach((button) => {
+      const slug = button.dataset.slug;
+      const active = Boolean(slug && bookmarks.has(slug));
+      const label = labelFor(button, active);
+      button.classList.toggle('is-bookmarked', active);
+      button.setAttribute('aria-pressed', String(active));
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-bookmark-card]').forEach((card) => {
+      const slug = card.getAttribute('data-bookmark-card');
+      card.classList.toggle('hidden', !slug || !bookmarks.has(slug));
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-bookmarked-empty]').forEach((emptyState) => {
+      emptyState.classList.toggle('hidden', bookmarks.size > 0);
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-bookmarked-count]').forEach((counter) => {
+      counter.textContent = formatCount(counter, bookmarks.size);
+    });
+  }
+
+  function initBookmarks() {
+    const bookmarkWindow = window as BookmarkWindow;
+    if (bookmarkWindow.__voiceToolsBookmarksInitialized) {
+      syncBookmarkUi();
+      return;
+    }
+    bookmarkWindow.__voiceToolsBookmarksInitialized = true;
+
+    document.addEventListener('click', (event) => {
+      const button = event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-bookmark-toggle]')
+        : null;
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const slug = button.dataset.slug;
+      if (!slug) return;
+
+      const bookmarks = readBookmarks();
+      if (bookmarks.has(slug)) {
+        bookmarks.delete(slug);
+      } else {
+        bookmarks.add(slug);
+      }
+      writeBookmarks(bookmarks);
+      syncBookmarkUi();
+    });
+
+    syncBookmarkUi();
+  }
+
+  initBookmarks();
+</script>
+
+<style>
+  .bookmark-toggle .bookmark-solid {
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .bookmark-toggle .bookmark-outline {
+    opacity: 1;
+    transition: opacity 150ms ease;
+  }
+
+  .bookmark-toggle.is-bookmarked {
+    border-color: #facc15;
+    background: #facc15;
+    color: #201515;
+  }
+
+  :global(html.dark) .bookmark-toggle.is-bookmarked {
+    border-color: #facc15;
+    background: #facc15;
+    color: #201515;
+  }
+
+  .bookmark-toggle.is-bookmarked .bookmark-solid {
+    opacity: 1;
+  }
+
+  .bookmark-toggle.is-bookmarked .bookmark-outline {
+    opacity: 0;
+  }
+</style>

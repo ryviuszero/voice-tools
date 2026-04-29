@@ -1,0 +1,78 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+const tools = await getCollection('tools');
+---
+
+<BaseLayout
+  title="About"
+  description="About Voice Tools Directory — a curated open-source directory of voice AI tools."
+>
+  <main class="max-w-2xl mx-auto px-4 py-16 space-y-10">
+    <section>
+      <h1 class="text-3xl font-bold mb-4">About Voice Tools Directory</h1>
+      <p class="text-gray-600 leading-relaxed">
+        Voice Tools Directory is an open-source, community-maintained directory of voice AI tools
+        curated specifically for <strong>content creators</strong>, <strong>game developers</strong>,
+        and <strong>voice AI builders</strong>. Unlike general AI tool aggregators, we focus on
+        what actually matters for each user group: licensing clarity, pricing transparency, and
+        realistic capability assessments.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-3">Why we built this</h2>
+      <ul class="space-y-3 text-gray-600">
+        <li class="flex gap-3"><span class="text-gray-400 shrink-0 mt-0.5">→</span>
+          <span>Most AI directories list hundreds of tools with no context on licensing — we prioritize "YouTube monetizable?", "game use OK?", "commercial use allowed?"</span>
+        </li>
+        <li class="flex gap-3"><span class="text-gray-400 shrink-0 mt-0.5">→</span>
+          <span>Real pricing data, not just "contact us" — we track <a href="/changelog" class="text-blue-600 hover:underline">pricing changes</a> over time</span>
+        </li>
+        <li class="flex gap-3"><span class="text-gray-400 shrink-0 mt-0.5">→</span>
+          <span>AI-friendly: structured JSON API and <a href="/llms.txt" class="text-blue-600 hover:underline">llms.txt</a> so AI assistants can answer "what's the best TTS for my budget?" accurately</span>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-3">The data</h2>
+      <p class="text-gray-600 leading-relaxed mb-4">
+        Every tool is manually curated. Data is stored as Markdown files in a public GitHub
+        repository. We never fill in fields we can't verify — if we don't know the latency,
+        it's not on the page.
+      </p>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-3xl font-bold">{tools.length}</div>
+          <div class="text-sm text-gray-500 mt-1">Tools indexed</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-3xl font-bold">10</div>
+          <div class="text-sm text-gray-500 mt-1">Categories</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-3xl font-bold">0</div>
+          <div class="text-sm text-gray-500 mt-1">Paid placements</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-3">Contributing</h2>
+      <p class="text-gray-600 leading-relaxed mb-4">
+        The directory is open source. Adding a tool takes ~30 seconds: create one Markdown file,
+        fill in the frontmatter, open a PR. See the <a href="/submit" class="text-blue-600 hover:underline">Submit a Tool</a> page.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-3">License</h2>
+      <p class="text-gray-600">
+        Code: <strong>MIT</strong>. Tool data: <strong>CC BY 4.0</strong>.
+        You're free to use the data in your own projects with attribution.
+      </p>
+    </section>
+  </main>
+</BaseLayout>

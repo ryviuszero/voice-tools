@@ -1,0 +1,364 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import ToolLogo from '../components/ToolLogo.astro';
+import { getCollection } from 'astro:content';
+import { changelogDescription, loadCategories, recentChangelog } from '../lib/data-loader';
+import { recentTools, BADGE_CLASS, formatToolBadge, visibleToolBadges } from '../lib/tool-helpers';
+import { localizedToolData } from '../lib/i18n';
+import { GITHUB_BASE_URL } from '../lib/site-config';
+
+const allTools       = await getCollection('tools');
+const categories     = loadCategories();
+const changes        = recentChangelog(5);
+
+const featuredCategories = categories.filter((c) => c.featured);
+const newTools           = recentTools(allTools, 5);
+const featuredWorkflows  = (await getCollection('workflows'))
+  .filter((workflow) => workflow.data.featured)
+  .sort((a, b) => Number(a.data.user_group !== 'creators') - Number(b.data.user_group !== 'creators'));
+const footerLinks = [
+  GITHUB_BASE_URL && { href: GITHUB_BASE_URL, label: 'GitHub' },
+  { href: '/llms.txt', label: 'llms.txt' },
+  { href: '/about', label: 'About' },
+  { href: '/submit', label: 'Submit a Tool' },
+  { href: '/workflows', label: 'Workflows' },
+].filter(Boolean) as Array<{ href: string; label: string }>;
+
+const toolNameBySlug = new Map(allTools.map((t) => [t.slug, t.data.name]));
+const WORKFLOW_GROUP_META: Record<string, { emoji: string; color: string }> = {
+  creators:          { emoji: '🎬', color: 'creator' },
+  game_devs:         { emoji: '🎮', color: 'gamedev' },
+  voice_ai_builders: { emoji: '🤖', color: 'voiceai' },
+};
+
+const WORKFLOW_BG_LIGHT: Record<string, string> = {
+  creator: '#1A1A1A',
+  gamedev: '#1A1A1A',
+  voiceai: '#1A1A1A',
+};
+const WORKFLOW_BG_DARK: Record<string, string> = {
+  creator: '#1A1A1A',
+  gamedev: '#1A1A1A',
+  voiceai: '#1A1A1A',
+};
+
+const CHANGE_TYPE_LABEL: Record<string, string> = {
+  pricing_change: 'Price',
+  feature_added:  'Feature',
+  product_change: 'Update',
+  model_release:  'Model',
+  policy_change:  'Policy',
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Voice Tools Directory',
+  url: 'https://voice.tools',
+  description: 'Curated voice AI tools for creators, game developers, and voice AI builders.',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: { '@type': 'EntryPoint', urlTemplate: 'https://voice.tools/?q={search_term_string}' },
+    'query-input': 'required name=search_term_string',
+  },
+};
+---
+
+<BaseLayout title="Voice Tools Directory">
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <main class="max-w-6xl mx-auto px-4 py-10 sm:py-14 space-y-16" data-pagefind-ignore>
+
+    <!-- Hero -->
+    <section class="relative space-y-8 py-14 sm:py-20 px-5 sm:px-10 hero-mesh hero-showcase bg-dot-pattern">
+      <div class="hero-frequency-field" aria-hidden="true">
+        <span style="--x:9%;--y:26%;--h:76px;--color:#ff4f00;--delay:-0.8s;"></span>
+        <span style="--x:13%;--y:26%;--h:108px;--color:#ff8a3d;--delay:-1.7s;"></span>
+        <span style="--x:17%;--y:26%;--h:58px;--color:#fbbf24;--delay:-2.4s;"></span>
+        <span style="--x:73%;--y:20%;--h:86px;--color:#4ade80;--delay:-1.1s;"></span>
+        <span style="--x:77%;--y:20%;--h:122px;--color:#22c55e;--delay:-2.2s;"></span>
+        <span style="--x:81%;--y:20%;--h:66px;--color:#818cf8;--delay:-3.1s;"></span>
+        <span style="--x:15%;--y:70%;--h:92px;--color:#4ade80;--delay:-2.8s;"></span>
+        <span style="--x:19%;--y:70%;--h:46px;--color:#22c55e;--delay:-1.5s;"></span>
+        <span style="--x:72%;--y:68%;--h:62px;--color:#818cf8;--delay:-0.6s;"></span>
+        <span style="--x:76%;--y:68%;--h:104px;--color:#6366f1;--delay:-2.6s;"></span>
+        <span style="--x:80%;--y:68%;--h:72px;--color:#ff4f00;--delay:-3.7s;"></span>
+      </div>
+      <div class="hero-bottom-fade" aria-hidden="true"></div>
+
+      <div class="relative z-10 max-w-4xl space-y-7">
+        <p class="taaft-eyebrow text-xs text-[#FF6B00]">
+          #1 ranked voice AI directory / updated daily
+        </p>
+        <h1 class="font-display text-5xl sm:text-7xl lg:text-[80px] font-black leading-[0.92] text-gradient-hero">
+          THERE'S A VOICE AI FOR
+          <span class="mt-3 block w-fit border-b-[10px] border-[#FF6B00] pb-1">YOUR NEXT TAKE</span>
+        </h1>
+        <p class="max-w-2xl text-lg sm:text-xl text-gray-500 dark:text-slate-400">
+          Find voice tools for dubbing, cloning, agents, games, narration, and every weird production job in between.
+        </p>
+        <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#B8B8B8] taaft-stat">
+          <span>{allTools.length} tools</span>
+          <span>{categories.length} categories</span>
+          <span>{changes.length} fresh updates</span>
+        </div>
+
+        <!-- Search bar -->
+        <label class="flex items-center gap-3 w-full max-w-2xl px-4 py-3 text-left transition-colors
+                      border-2 border-[#FAFAFA] bg-[#1A1A1A] hover:border-[#FF6B00] focus-within:border-[#FF6B00]">
+          <svg class="w-4 h-4 shrink-0 text-[#FF6B00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span class="sr-only">Search voice AI tools</span>
+          <input
+            type="search"
+            class="open-search-input flex-1 min-w-0 bg-transparent text-sm outline-none font-mono uppercase tracking-[0.06em]
+                   text-gray-900 placeholder:text-gray-400
+                   dark:text-slate-100 dark:placeholder:text-slate-500"
+            placeholder={`Find an AI that speaks, clones, dubs...`}
+            autocomplete="off"
+          />
+          <kbd class="text-xs font-mono px-1.5 py-0.5 bg-[#FF6B00] border-2 border-black text-black">/</kbd>
+        </label>
+
+        <!-- Audio waveform animation -->
+        <div class="grid max-w-2xl grid-cols-12 gap-1 h-8" aria-hidden="true" role="presentation">
+          <span class="bg-[#FF6B00] col-span-2"></span>
+          <span class="bg-[#FAFAFA] col-span-1"></span>
+          <span class="bg-[#FF6B00] col-span-3"></span>
+          <span class="bg-[#2E2E2E] col-span-2"></span>
+          <span class="bg-[#FAFAFA] col-span-1"></span>
+          <span class="bg-[#FF6B00] col-span-3"></span>
+        </div>
+
+        <!-- Segment buttons -->
+        <div class="flex flex-wrap gap-3">
+          <a href="/for-creators"
+             data-nav-group-option="creators"
+             class="btn-neon btn-neon-creator inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
+            🎬 For Creators
+          </a>
+          <a href="/for-game-devs"
+             data-nav-group-option="game_devs"
+             class="taaft-secondary inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
+            🎮 For Game Devs
+          </a>
+          <a href="/for-voice-ai"
+             data-nav-group-option="voice_ai_builders"
+             class="taaft-secondary inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
+            🤖 For Voice AI Builders
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bookmarked Tools -->
+    <section>
+      <h2 class="taaft-section-heading text-2xl font-black">
+        <span class="taaft-section-kicker">01 / SAVED STACK</span>
+        <span
+          class="text-sm font-normal text-gray-400 dark:text-slate-500"
+          data-bookmarked-count
+          data-count-template="({count} saved)"
+          data-count-template-one="({count} saved)"
+        >(0 saved)</span>
+      </h2>
+      <p data-bookmarked-empty class="text-sm text-gray-400 dark:text-slate-500 font-mono uppercase tracking-[0.06em]">
+        No tools bookmarked in this session yet. Use the bookmark button on any tool card to add it here.
+      </p>
+      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {allTools.map((tool) => <ToolCard tool={tool} bookmarkListItem />)}
+      </ul>
+    </section>
+
+    <!-- Browse by Category -->
+    <section>
+      <h2 class="taaft-section-heading text-2xl font-black">
+        <span class="taaft-section-kicker">02 / BROWSE BY TASK</span>
+      </h2>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {featuredCategories.map((cat) => (
+          <li>
+            <a href={`/category/${cat.slug}`} class="grid h-full min-h-24 grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-4 p-4 glass-card">
+              <span class="inline-flex h-14 w-14 items-center justify-center border-2 border-[#2E2E2E] bg-[#242424] text-center text-xs leading-tight text-[#FF6B00]">
+                {cat.icon}
+              </span>
+              <div class="min-w-0">
+                <div class="font-display font-black text-base text-gray-900 dark:text-white">{cat.name_en}</div>
+                <div class="taaft-tag mt-1 text-[11px] text-[#FF6B00]">#{cat.slug}</div>
+                <div class="text-xs text-gray-400 dark:text-slate-500">{cat.description_en}</div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Two columns: Recent Changes + Newly Added -->
+    <div class="grid gap-12 lg:grid-cols-2">
+
+      {changes.length > 0 && (
+        <section>
+          <h2 class="taaft-section-heading text-xl font-black">
+            <span class="taaft-section-kicker">03 / RECENT UPDATES</span>
+          </h2>
+          <ul class="border-y-2 border-[#2E2E2E] divide-y divide-gray-100 dark:divide-white/[0.06]">
+            {changes.map((entry) => (
+            <li class="py-3 grid grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-3">
+                <time class="text-xs pt-0.5 text-[#FF6B00]">
+                  {entry.date.slice(5)}
+                </time>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                  <a href={`/tools/${entry.tool_slug}`}
+                     class="text-sm font-medium transition-colors
+                            text-gray-900 hover:text-indigo-600
+                            dark:text-slate-100 dark:hover:text-[#818cf8]">
+                    {toolNameBySlug.get(entry.tool_slug) ?? entry.tool_slug}
+                  </a>
+                  <span class="text-xs px-1.5 py-0.5 rounded-full
+                               bg-gray-100 text-gray-500
+                               dark:bg-white/[0.08] dark:text-slate-400 dark:border dark:border-white/10">
+                    {CHANGE_TYPE_LABEL[entry.change_type] ?? entry.change_type}
+                  </span>
+                  </div>
+                  <p class="text-xs mt-0.5 text-gray-400 dark:text-slate-500">
+                    {changelogDescription(entry, 'en')}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <a href="/changelog"
+             class="taaft-tag text-sm mt-4 inline-block transition-colors
+                    text-orange-600 hover:text-orange-700
+                    dark:text-[#fb923c] dark:hover:text-[#fdba74]">
+            View full changelog →
+          </a>
+        </section>
+      )}
+
+      <section>
+        <h2 class="taaft-section-heading text-xl font-black">
+          <span class="taaft-section-kicker">04 / NEW THIS WEEK</span>
+        </h2>
+        <ul class="border-y-2 border-[#2E2E2E] divide-y divide-gray-100 dark:divide-white/[0.06]">
+          {newTools.map((tool) => (
+            <li class="py-3 flex items-center gap-3">
+              {(() => {
+                const localized = localizedToolData(tool.data, 'en');
+                return (
+                  <>
+                    <ToolLogo
+                      src={tool.data.logo}
+                      alt=""
+                      size={24}
+                      class="w-6 h-6 rounded object-contain shrink-0 bg-gray-100 dark:bg-white/[0.06]"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <a href={`/tools/${tool.slug}`}
+                         class="font-display text-base font-black transition-colors
+                                text-gray-900 hover:text-indigo-600
+                                dark:text-slate-100 dark:hover:text-[#818cf8]">
+                        {localized.name}
+                      </a>
+                      <p class="text-xs truncate text-gray-400 dark:text-slate-500">{localized.tagline}</p>
+                    </div>
+                  </>
+                );
+              })()}
+              {visibleToolBadges(tool.data.badges).slice(0, 1).map((badge) => (
+                <span class={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${BADGE_CLASS[badge]}`}>
+                  {formatToolBadge(badge, 'en')}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+        <a href="/for-creators"
+           class="taaft-tag text-sm mt-4 inline-block transition-colors
+                  text-indigo-600 hover:text-indigo-700
+                  dark:text-[#818cf8] dark:hover:text-[#a5b4fc]">
+          Browse all tools →
+        </a>
+      </section>
+    </div>
+
+    <!-- Workflow Guides -->
+    <section data-home-workflows>
+      <h2 class="taaft-section-heading text-2xl font-black">
+        <span class="taaft-section-kicker">05 / WORKFLOW GUIDES</span>
+      </h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        {featuredWorkflows.map((workflow) => {
+          const meta = WORKFLOW_GROUP_META[workflow.data.user_group];
+          return (
+            <a href={`/workflows/${workflow.slug}`}
+               class={`block p-5 glass-card glass-card-${meta.color} workflow-card`}
+               data-workflow-group={workflow.data.user_group}
+               data-color={meta.color}
+               data-bg-light={WORKFLOW_BG_LIGHT[meta.color]}
+               data-bg-dark={WORKFLOW_BG_DARK[meta.color]}>
+              <div class="text-2xl mb-2">{meta.emoji}</div>
+              <div class="font-display font-black text-base mb-1 text-gray-900 dark:text-white">{workflow.data.title}</div>
+              <div class="text-xs text-gray-500 dark:text-slate-400">{workflow.data.description}</div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t mt-16 py-8 text-center text-sm space-x-4
+                 border-gray-200 text-gray-400
+                 dark:border-white/[0.08] dark:text-slate-500">
+    {footerLinks.map((link, index) => (
+      <>
+        {index > 0 && <span>·</span>}
+        <a href={link.href} class="hover:text-gray-700 dark:hover:text-slate-200 transition-colors">{link.label}</a>
+      </>
+    ))}
+  </footer>
+</BaseLayout>
+
+<style is:global>
+  html[data-nav-group-value='creators'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='creators']),
+  html[data-nav-group-value='game_devs'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='game_devs']),
+  html[data-nav-group-value='voice_ai_builders'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='voice_ai_builders']) {
+    display: none;
+  }
+</style>
+
+<script>
+  // Apply correct workflow card background based on current theme
+  function applyWorkflowBg() {
+    const isDark = document.documentElement.classList.contains('dark');
+    document.querySelectorAll<HTMLElement>('.workflow-card').forEach((card) => {
+      card.style.background = isDark
+        ? (card.dataset.bgDark ?? '')
+        : (card.dataset.bgLight ?? '');
+    });
+  }
+  applyWorkflowBg();
+
+  // Re-apply when theme toggles
+  const observer = new MutationObserver(applyWorkflowBg);
+  observer.observe(document.documentElement, { attributeFilter: ['class'] });
+
+  function applyWorkflowAudienceFilter() {
+    const validGroups = new Set(['creators', 'game_devs', 'voice_ai_builders']);
+    const selectedGroup = localStorage.getItem('vtd_nav_group') || '';
+    document.querySelectorAll<HTMLElement>('[data-home-workflows] [data-workflow-group]').forEach((card) => {
+      const shouldShow = !validGroups.has(selectedGroup) || card.dataset.workflowGroup === selectedGroup;
+      card.classList.toggle('hidden', !shouldShow);
+    });
+  }
+  applyWorkflowAudienceFilter();
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'vtd_nav_group') applyWorkflowAudienceFilter();
+  });
+</script>

@@ -1,0 +1,123 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const lang = 'zh';
+---
+
+<BaseLayout title="工具对比" description="并排对比语音 AI 工具。" lang={lang}>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">工具对比</h1>
+      <p class="text-gray-500">最多选择 4 个工具并排对比。</p>
+    </div>
+    <div id="compare-loading" class="text-center py-20 text-gray-400">加载对比中...</div>
+    <div id="compare-empty" class="hidden text-center py-20 space-y-4">
+      <p class="text-gray-400">还没有选择工具。浏览工具并点击“+ 对比”即可添加。</p>
+      <div class="flex gap-3 justify-center">
+        <a href="/zh/for-creators" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">创作者</a>
+        <a href="/zh/for-game-devs" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">游戏开发</a>
+        <a href="/zh/for-voice-ai" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">Voice AI</a>
+      </div>
+    </div>
+    <div id="compare-table" class="hidden overflow-x-auto"></div>
+  </main>
+</BaseLayout>
+
+<script>
+  const COMPARE_KEY = 'vtd_compare';
+  type CompareItem = { slug: string; name: string };
+  interface ToolData {
+    slug: string; name: string; tagline: string; website: string; logo: string; primary_category: string;
+    pricing: { model: string; has_free_tier: boolean; starting_paid_usd: number; pricing_url: string; cost_per_1000_chars?: number; cost_per_minute?: number };
+    licensing: { commercial_use: boolean; youtube_monetization: boolean; game_use: boolean; voice_cloning_allowed: boolean; notes: string };
+    capabilities: { voice_cloning: boolean; multilingual: boolean; chinese_support: boolean; realtime_capable: boolean; open_source: boolean; offline_capable?: boolean; batch_api?: boolean };
+    gotchas: string[];
+    portability?: { voice_model_export: boolean; notes?: string };
+    i18n?: { zh?: { name?: string; tagline?: string; gotchas?: string[] } };
+  }
+  const PRICING_LABEL: Record<string, string> = { free: '免费', freemium: '免费增值', paid: '付费', open_source: '开源', enterprise: '企业版' };
+  const CATEGORY_LABEL: Record<string, string> = {
+    tts: '文字转语音', stt: '语音转文字', voice_cloning: '声音克隆', dubbing: '配音与翻译',
+    sound_effects: '音效生成', voice_changer: '变声器', audio_cleanup: '音频清理',
+    voice_agent_platform: 'Voice Agent 平台', realtime_infrastructure: '实时语音基础设施', conversation_framework: '对话编排框架',
+  };
+  function formatPrice(t: ToolData): string {
+    if (t.pricing.model === 'free' || t.pricing.model === 'open_source') return '免费';
+    if (t.pricing.starting_paid_usd > 0) return `$${t.pricing.starting_paid_usd}/月起`;
+    return PRICING_LABEL[t.pricing.model] ?? t.pricing.model;
+  }
+  function bool(v: boolean) { return v ? '✅' : '✗'; }
+  function displayName(t: ToolData) { return t.i18n?.zh?.name ?? t.name; }
+  function escapeHtml(value: string) {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[char]!);
+  }
+  function escapeAttr(value: string) {
+    return escapeHtml(value);
+  }
+  function renderTable(tools: ToolData[]) {
+    const rows: Array<{ label: string; fn: (t: ToolData) => string }> = [
+      { label: '分类', fn: (t) => CATEGORY_LABEL[t.primary_category] ?? t.primary_category },
+      { label: '价格', fn: (t) => formatPrice(t) },
+      { label: '价格模式', fn: (t) => PRICING_LABEL[t.pricing.model] ?? t.pricing.model },
+      { label: '免费档', fn: (t) => bool(t.pricing.has_free_tier) },
+      { label: '每千字符成本', fn: (t) => t.pricing.cost_per_1000_chars ? `$${t.pricing.cost_per_1000_chars}` : '-' },
+      { label: '每分钟成本', fn: (t) => t.pricing.cost_per_minute ? `$${t.pricing.cost_per_minute}` : '-' },
+      { label: '授权', fn: () => '' },
+      { label: '商用', fn: (t) => bool(t.licensing.commercial_use) },
+      { label: 'YouTube 变现', fn: (t) => bool(t.licensing.youtube_monetization) },
+      { label: '游戏使用', fn: (t) => bool(t.licensing.game_use) },
+      { label: '声音克隆允许', fn: (t) => bool(t.licensing.voice_cloning_allowed) },
+      { label: '能力', fn: () => '' },
+      { label: '声音克隆', fn: (t) => bool(t.capabilities.voice_cloning) },
+      { label: '多语言', fn: (t) => bool(t.capabilities.multilingual) },
+      { label: '中文支持', fn: (t) => bool(t.capabilities.chinese_support) },
+      { label: '实时', fn: (t) => bool(t.capabilities.realtime_capable) },
+      { label: '开源', fn: (t) => bool(t.capabilities.open_source) },
+      { label: '离线 / 本地', fn: (t) => t.capabilities.offline_capable === undefined ? '-' : bool(t.capabilities.offline_capable) },
+      { label: '批量 API', fn: (t) => t.capabilities.batch_api === undefined ? '-' : bool(t.capabilities.batch_api) },
+      { label: '风险提示', fn: () => '' },
+      { label: '注意事项', fn: (t) => String(t.i18n?.zh?.gotchas?.length ?? t.gotchas?.length ?? 0) },
+      { label: '声音模型导出', fn: (t) => t.portability ? bool(t.portability.voice_model_export) : '-' },
+    ];
+    const cols = tools.map((t) => `<th class="px-4 py-3 text-left font-semibold min-w-40"><a href="/zh/tools/${escapeAttr(encodeURIComponent(t.slug))}" class="hover:underline">${escapeHtml(displayName(t))}</a></th>`).join('');
+    const bodyRows = rows.map(({ label, fn }) => {
+      if (label === '授权' || label === '能力' || label === '风险提示') return `<tr class="bg-gray-50"><td colspan="${tools.length + 1}" class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">${escapeHtml(label)}</td></tr>`;
+      const vals = tools.map((t) => {
+        const value = fn(t);
+        const cls = value === '✅' ? 'text-green-600' : value === '✗' ? 'text-red-400' : '';
+        return `<td class="px-4 py-3 text-sm ${cls}">${escapeHtml(value)}</td>`;
+      }).join('');
+      return `<tr class="border-t border-gray-100 hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(label)}</td>${vals}</tr>`;
+    }).join('');
+    return `<table class="w-full border border-gray-200 rounded-xl overflow-hidden"><thead class="bg-gray-50 border-b border-gray-200"><tr><th class="px-4 py-3 text-left text-sm text-gray-400 font-normal min-w-32"></th>${cols}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  }
+  async function init() {
+    const loadingEl = document.getElementById('compare-loading')!;
+    const emptyEl = document.getElementById('compare-empty')!;
+    const tableEl = document.getElementById('compare-table')!;
+    const params = new URLSearchParams(location.search);
+    const urlSlugs = params.get('tools')?.split(',').filter(Boolean) ?? [];
+    const lsSlugs = (JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]') as CompareItem[]).map((i) => i.slug);
+    const slugs = urlSlugs.length ? urlSlugs : lsSlugs;
+    if (!slugs.length) { loadingEl.classList.add('hidden'); emptyEl.classList.remove('hidden'); return; }
+    try {
+      const res = await fetch('/api/tools.json');
+      const all = await res.json() as ToolData[];
+      const tools = slugs.map((slug) => all.find((tool) => tool.slug === slug)).filter((tool): tool is ToolData => Boolean(tool));
+      loadingEl.classList.add('hidden');
+      if (!tools.length) { emptyEl.classList.remove('hidden'); return; }
+      tableEl.classList.remove('hidden');
+      tableEl.innerHTML = renderTable(tools);
+    } catch {
+      loadingEl.textContent = '加载工具数据失败。';
+    }
+  }
+  init();
+</script>

@@ -1,0 +1,663 @@
+---
+import Nav from '../components/Nav.astro';
+import { SITE, alternatePath, localizedPath, t, type Language } from '../lib/i18n';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  lang?: Language;
+  activeNavGroup?: 'creators' | 'game_devs' | 'voice_ai_builders';
+}
+
+const {
+  title,
+  lang = 'en',
+  description = SITE[lang].description,
+  ogImage = '/og-default.png',
+  activeNavGroup,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title === 'Voice Tools Directory'
+  ? SITE[lang].name
+  : `${title} | ${SITE[lang].name}`;
+
+const ogImageURL = ogImage.startsWith('http') ? ogImage : new URL(ogImage, Astro.site).toString();
+const alternateLang = lang === 'en' ? 'zh' : 'en';
+const alternateURL = new URL(alternatePath(Astro.url.pathname, alternateLang), Astro.site);
+const defaultURL = new URL(localizedPath(Astro.url.pathname.replace(/^\/zh(?=\/|$)/, '') || '/', 'en'), Astro.site);
+const ui = t(lang);
+---
+<!doctype html>
+<html lang={lang === 'zh' ? 'zh-CN' : 'en'}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="alternate" hreflang={alternateLang === 'zh' ? 'zh-CN' : 'en'} href={alternateURL} />
+    <link rel="alternate" hreflang="x-default" href={defaultURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:title"       content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url"         content={canonicalURL} />
+    <meta property="og:type"        content="website" />
+    <meta property="og:image"       content={ogImageURL} />
+    <meta property="og:site_name"   content="Voice Tools Directory" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image"       content={ogImageURL} />
+
+    <title>{fullTitle}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- FOUC prevention: apply theme before first paint -->
+    <script is:inline>
+      (function() {
+        document.documentElement.classList.add('dark');
+      })();
+    </script>
+    {import.meta.env.DEV && (
+      <script is:inline>
+        (function() {
+          var resetKey = 'vtd_dev_local_storage_reset';
+          if (sessionStorage.getItem(resetKey)) return;
+          localStorage.clear();
+          sessionStorage.setItem(resetKey, '1');
+        })();
+      </script>
+    )}
+
+    <slot name="head" />
+  </head>
+  <body class="min-h-screen bg-[#0E0E0E] text-[#FAFAFA] font-sans antialiased transition-colors duration-200">
+    <Nav lang={lang} activeNavGroup={activeNavGroup} />
+    <slot />
+
+    <!-- Global compare bar -->
+    <div id="compare-bar"
+         class="hidden fixed bottom-0 inset-x-0 z-40
+                bg-white/95 border-t border-gray-200 text-gray-900
+                dark:bg-[#0f1324]/95 dark:border-white/10 dark:text-white
+                backdrop-blur-xl px-4 py-3 shadow-2xl">
+      <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-sm">
+          <span class="font-medium">{ui.common.compare}:</span>
+          <span id="compare-names" class="text-gray-500 dark:text-slate-300"></span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <a id="compare-link" href="/compare"
+             class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors
+                    bg-gray-900 text-white hover:bg-gray-700
+                    dark:bg-white/10 dark:border dark:border-white/20 dark:text-white dark:hover:bg-white/20">
+            {ui.common.compare}
+          </a>
+          <button id="compare-clear"
+                  class="text-sm transition-colors text-gray-400 hover:text-gray-700 dark:text-slate-500 dark:hover:text-slate-200">
+            {ui.common.clear}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global compare state manager -->
+    <script>
+      const COMPARE_KEY = 'vtd_compare';
+      const MAX_COMPARE = 4;
+
+      function getCompare(): { slug: string; name: string }[] {
+        try { return JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]'); }
+        catch { return []; }
+      }
+
+      function setCompare(items: { slug: string; name: string }[]) {
+        localStorage.setItem(COMPARE_KEY, JSON.stringify(items));
+        updateBar();
+        updateButtons();
+      }
+
+      function updateBar() {
+        const bar   = document.getElementById('compare-bar')!;
+        const names = document.getElementById('compare-names')!;
+        const link  = document.getElementById('compare-link') as HTMLAnchorElement;
+        const items = getCompare();
+        if (items.length < 2) {
+          bar.classList.add('hidden');
+        } else {
+          bar.classList.remove('hidden');
+          names.textContent = items.map((i) => i.name).join(', ');
+          const prefix = document.documentElement.lang.startsWith('zh') ? '/zh' : '';
+          link.href = `${prefix}/compare?tools=${items.map((i) => i.slug).join(',')}`;
+        }
+      }
+
+      function updateButtons() {
+        const items = getCompare();
+        const slugs = new Set(items.map((i) => i.slug));
+        document.querySelectorAll<HTMLButtonElement>('.compare-btn').forEach((btn) => {
+          const slug = btn.dataset.slug!;
+          if (slugs.has(slug)) {
+            btn.textContent = `✓ ${document.documentElement.lang.startsWith('zh') ? '已添加' : 'Added'}`;
+            btn.classList.add('compare-active');
+          } else {
+            btn.textContent = `+ ${document.documentElement.lang.startsWith('zh') ? '对比' : 'Compare'}`;
+            btn.classList.remove('compare-active');
+          }
+          btn.disabled = !slugs.has(slug) && items.length >= MAX_COMPARE;
+          if (btn.disabled) {
+            btn.setAttribute('aria-disabled', 'true');
+            btn.title = document.documentElement.lang.startsWith('zh')
+              ? `最多只能对比 ${MAX_COMPARE} 个工具`
+              : `Compare up to ${MAX_COMPARE} tools`;
+          } else {
+            btn.removeAttribute('aria-disabled');
+            btn.removeAttribute('title');
+          }
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        const btn = (e.target as Element).closest<HTMLButtonElement>('.compare-btn');
+        if (!btn) return;
+        const slug = btn.dataset.slug!;
+        const name = btn.dataset.name!;
+        let items = getCompare();
+        const idx = items.findIndex((i) => i.slug === slug);
+        if (idx >= 0) {
+          items.splice(idx, 1);
+        } else if (items.length < MAX_COMPARE) {
+          items.push({ slug, name });
+        }
+        setCompare(items);
+      });
+
+      document.getElementById('compare-clear')?.addEventListener('click', () => setCompare([]));
+
+      updateBar();
+      updateButtons();
+    </script>
+
+  <style is:global is:inline>
+
+    /* ════════════════════════════════════════════════════════
+       TAAFT-STYLE DIRECTORY THEME
+       Bold dark editorial system: one orange accent, hard borders,
+       mono metadata, sharp corners, and leaderboard energy.
+    ════════════════════════════════════════════════════════ */
+    :root,
+    html.dark {
+      color-scheme: dark;
+      --taaft-bg-page: #0e0e0e;
+      --taaft-bg-card: #1a1a1a;
+      --taaft-bg-elevated: #242424;
+      --taaft-bg-raised: #2b2b2b;
+      --taaft-bg-track: #343434;
+      --taaft-bg-inverse: #fafafa;
+      --taaft-brand: #ff6b00;
+      --taaft-brand-hover: #ff8533;
+      --taaft-brand-text: #0e0e0e;
+      --taaft-text-primary: #fafafa;
+      --taaft-text-secondary: #b8b8b8;
+      --taaft-text-tertiary: #6b6b6b;
+      --taaft-border: #2e2e2e;
+      --taaft-border-visible: #454545;
+      --taaft-border-strong: #fafafa;
+      --taaft-shadow-hard: 4px 4px 0 #000;
+      --taaft-shadow-brand: 4px 4px 0 var(--taaft-brand);
+      --zapier-bg: var(--taaft-bg-page);
+      --zapier-surface: var(--taaft-bg-card);
+      --zapier-surface-2: var(--taaft-bg-elevated);
+      --zapier-muted-surface: var(--taaft-bg-elevated);
+      --zapier-text: var(--taaft-text-primary);
+      --zapier-body: var(--taaft-text-secondary);
+      --zapier-muted: var(--taaft-text-tertiary);
+      --zapier-border: var(--taaft-border);
+      --zapier-orange: var(--taaft-brand);
+      --pagefind-ui-primary: var(--taaft-brand);
+      --pagefind-ui-text: var(--taaft-text-primary);
+      --pagefind-ui-background: var(--taaft-bg-card);
+      --pagefind-ui-border: var(--taaft-border);
+      --pagefind-ui-tag: var(--taaft-bg-elevated);
+    }
+
+    html,
+    body {
+      background:
+        linear-gradient(90deg, rgba(255, 107, 0, 0.05) 0 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px),
+        var(--taaft-bg-page) !important;
+      background-size: 44px 44px;
+      color: var(--taaft-text-primary) !important;
+      font-family: "IBM Plex Sans", "Arial Narrow", "Helvetica Neue", Arial, system-ui, sans-serif;
+    }
+
+    h1,
+    h2,
+    h3,
+    .font-display {
+      font-family: "Space Grotesk", "Arial Black", Impact, "Helvetica Neue Condensed", sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    .font-mono,
+    kbd,
+    time,
+    .taaft-mono {
+      font-family: "IBM Plex Mono", "JetBrains Mono", Consolas, ui-monospace, monospace !important;
+      letter-spacing: 0.02em;
+    }
+
+    header.sticky {
+      background: rgba(14, 14, 14, 0.96) !important;
+      border-bottom: 2px solid var(--taaft-border-strong) !important;
+      backdrop-filter: none !important;
+    }
+
+    header.sticky nav > a:first-child {
+      color: var(--taaft-text-primary) !important;
+      font-family: "Arial Black", Impact, sans-serif;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    header.sticky nav > a:first-child::after {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-left: 8px;
+      background: var(--taaft-brand);
+      box-shadow: 3px 3px 0 #000;
+    }
+
+    header.sticky nav a:not(:first-child),
+    header.sticky nav button,
+    header.sticky summary {
+      color: var(--taaft-text-secondary) !important;
+      font-family: "IBM Plex Mono", Consolas, ui-monospace, monospace !important;
+      font-size: 12px !important;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    header.sticky nav a:not(:first-child):hover,
+    header.sticky nav button:hover,
+    header.sticky summary:hover {
+      color: var(--taaft-brand) !important;
+      box-shadow: none !important;
+    }
+
+    #theme-toggle,
+    #search-trigger,
+    header.sticky a[hreflang],
+    [data-nav-group-collapsed] summary {
+      background: var(--taaft-bg-card) !important;
+      border: 2px solid var(--taaft-border) !important;
+      border-radius: 0 !important;
+    }
+
+    header.sticky nav a[href$='/submit'],
+    header.sticky nav a[href$='/zh/submit'],
+    header.sticky nav a[href='/submit'],
+    #compare-link {
+      background: var(--taaft-brand) !important;
+      border: 2px solid #000 !important;
+      border-radius: 0 !important;
+      color: var(--taaft-brand-text) !important;
+      box-shadow: var(--taaft-shadow-hard) !important;
+      font-weight: 800 !important;
+    }
+
+    header.sticky nav a[href$='/submit']:active,
+    #compare-link:active,
+    .taaft-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #000 !important;
+    }
+
+    .hero-mesh,
+    html.dark .hero-mesh {
+      background: var(--taaft-bg-page) !important;
+      animation: none !important;
+    }
+
+    .bg-dot-pattern {
+      background-image: linear-gradient(rgba(255,255,255,0.06) 2px, transparent 2px) !important;
+      background-size: 100% 14px !important;
+    }
+
+    .hero-showcase {
+      min-height: clamp(420px, 50vw, 620px);
+      border: 3px solid var(--taaft-border-strong);
+      border-radius: 0 !important;
+      box-shadow: 8px 8px 0 #000;
+      overflow: visible !important;
+      justify-content: flex-start;
+    }
+
+    .hero-showcase::before,
+    .hero-showcase::after,
+    .hero-bottom-fade,
+    .hero-frequency-field {
+      display: none !important;
+    }
+
+    .taaft-eyebrow,
+    .taaft-stat,
+    .taaft-tag,
+    .taaft-section-kicker {
+      font-family: "IBM Plex Mono", Consolas, ui-monospace, monospace !important;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .taaft-section-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      color: var(--taaft-text-primary);
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .taaft-section-heading::after {
+      content: "";
+      flex: 1;
+      min-width: 24px;
+      border-top: 2px solid var(--taaft-border);
+    }
+
+    .taaft-section-kicker {
+      color: var(--taaft-brand);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .glass-card,
+    html.dark .glass-card {
+      background: var(--taaft-bg-card) !important;
+      border: 2px solid var(--taaft-border) !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .glass-card:hover,
+    html.dark .glass-card:hover,
+    .glass-card-creator:hover,
+    .glass-card-gamedev:hover,
+    .glass-card-voiceai:hover,
+    html.dark .glass-card-creator:hover,
+    html.dark .glass-card-gamedev:hover,
+    html.dark .glass-card-voiceai:hover {
+      background: var(--taaft-bg-elevated) !important;
+      border-color: var(--taaft-brand) !important;
+      box-shadow: var(--taaft-shadow-brand) !important;
+    }
+
+    .rounded,
+    .rounded-full,
+    .rounded-md,
+    .rounded-lg,
+    .rounded-xl,
+    .rounded-2xl {
+      border-radius: 0 !important;
+    }
+
+    .taaft-primary,
+    .btn-neon {
+      background: var(--taaft-brand) !important;
+      border: 2px solid #000 !important;
+      border-radius: 0 !important;
+      color: var(--taaft-brand-text) !important;
+      box-shadow: var(--taaft-shadow-hard) !important;
+      font-weight: 900;
+    }
+
+    .btn-neon:hover {
+      transform: none !important;
+      background: var(--taaft-brand-hover) !important;
+    }
+
+    .taaft-secondary {
+      background: transparent !important;
+      border: 2px solid var(--taaft-border-strong) !important;
+      color: var(--taaft-text-primary) !important;
+      border-radius: 0 !important;
+    }
+
+    .taaft-secondary:hover {
+      background: var(--taaft-bg-inverse) !important;
+      color: var(--taaft-bg-page) !important;
+    }
+
+    .compare-btn,
+    input,
+    textarea,
+    select {
+      background: var(--taaft-bg-card) !important;
+      color: var(--taaft-text-primary) !important;
+      border: 2px solid var(--taaft-border) !important;
+      border-radius: 0 !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--taaft-text-tertiary) !important;
+    }
+
+    .compare-active,
+    html.dark .compare-active {
+      color: var(--taaft-brand) !important;
+      border-color: var(--taaft-brand) !important;
+    }
+
+    #compare-bar,
+    #search-modal > div > div,
+    html.dark #search-modal > div > div {
+      background: var(--taaft-bg-card) !important;
+      border: 2px solid var(--taaft-border-strong) !important;
+      border-radius: 0 !important;
+      color: var(--taaft-text-primary) !important;
+      box-shadow: var(--taaft-shadow-hard) !important;
+      backdrop-filter: none !important;
+    }
+
+    #search-modal {
+      background: rgba(0, 0, 0, 0.78) !important;
+      backdrop-filter: none !important;
+    }
+
+    .text-gradient-hero,
+    html.dark .text-gradient-hero,
+    .text-gradient-brand {
+      background: none !important;
+      color: var(--taaft-text-primary) !important;
+      -webkit-text-fill-color: currentColor !important;
+    }
+
+    .taaft-orange-panel {
+      background: var(--taaft-brand);
+      border: 3px solid #000;
+      color: var(--taaft-brand-text);
+      box-shadow: var(--taaft-shadow-hard);
+    }
+
+    .taaft-orange-panel * {
+      color: var(--taaft-brand-text) !important;
+    }
+
+    .taaft-data-panel {
+      background: var(--taaft-bg-card) !important;
+      border: 2px solid var(--taaft-border-visible) !important;
+      box-shadow: 6px 6px 0 #000;
+    }
+
+    .taaft-stat-card {
+      background: var(--taaft-bg-raised) !important;
+      border: 2px solid var(--taaft-border) !important;
+    }
+
+    .taaft-note {
+      background: var(--taaft-bg-raised) !important;
+      border: 2px solid var(--taaft-border-visible) !important;
+      color: var(--taaft-text-secondary) !important;
+    }
+
+    .taaft-bar-track {
+      height: 10px !important;
+      background: var(--taaft-bg-track) !important;
+      border: 1px solid var(--taaft-border-visible);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    .taaft-bar-fill {
+      background: var(--taaft-brand) !important;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .dark\:bg-white\/\[0\.03\],
+    .dark\:bg-white\/\[0\.04\],
+    .dark\:bg-white\/\[0\.05\],
+    .dark\:bg-white\/\[0\.06\],
+    .dark\:bg-white\/\[0\.08\],
+    .dark\:bg-white\/10 {
+      background-color: var(--taaft-bg-raised) !important;
+    }
+
+    .dark\:border-white\/\[0\.08\],
+    .dark\:border-white\/10,
+    .dark\:border-white\/15,
+    .dark\:border-white\/20 {
+      border-color: var(--taaft-border-visible) !important;
+    }
+
+    .taaft-data-panel {
+      background: var(--taaft-bg-card) !important;
+      border-color: var(--taaft-border-visible) !important;
+      border-width: 2px !important;
+      box-shadow: 6px 6px 0 #000 !important;
+    }
+
+    .taaft-stat-card,
+    .taaft-note {
+      background: var(--taaft-bg-raised) !important;
+      border: 2px solid var(--taaft-border-visible) !important;
+    }
+
+    .taaft-bar-track {
+      height: 10px !important;
+      background: var(--taaft-bg-track) !important;
+      border: 1px solid var(--taaft-border-visible) !important;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .taaft-bar-fill {
+      background: var(--taaft-brand) !important;
+      box-shadow: 0 0 0 1px #000 !important;
+    }
+
+    .prose {
+      color: var(--taaft-text-secondary);
+      line-height: 1.75;
+    }
+
+    .prose :where(h2, h3, h4) {
+      color: var(--taaft-text-primary);
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 2rem 0 0.75rem;
+    }
+
+    .prose :where(p, ul, ol, blockquote, pre, table) {
+      margin: 1rem 0;
+    }
+
+    .prose :where(a) {
+      color: var(--taaft-brand);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .prose :where(ul, ol) {
+      padding-left: 1.5rem;
+    }
+
+    .prose :where(li) {
+      margin: 0.35rem 0;
+    }
+
+    .prose :where(strong) {
+      color: var(--taaft-text-primary);
+    }
+
+    .prose :where(code) {
+      background: var(--taaft-bg-raised);
+      border: 1px solid var(--taaft-border-visible);
+      color: var(--taaft-text-primary);
+      padding: 0.1rem 0.25rem;
+    }
+
+    .prose :where(pre) {
+      background: var(--taaft-bg-card);
+      border: 2px solid var(--taaft-border-visible);
+      overflow-x: auto;
+      padding: 1rem;
+    }
+
+    .prose :where(pre code) {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+
+    .prose :where(blockquote) {
+      border-left: 3px solid var(--taaft-brand);
+      color: var(--taaft-text-primary);
+      padding-left: 1rem;
+    }
+
+    main,
+    section,
+    ul,
+    li,
+    .grid > * {
+      min-width: 0;
+    }
+
+    a,
+    p,
+    span,
+    div {
+      overflow-wrap: break-word;
+    }
+
+    @media (max-width: 480px) {
+      header.sticky nav {
+        gap: 8px;
+      }
+
+      #search-trigger {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
+
+      .taaft-section-heading {
+        gap: 8px;
+      }
+    }
+
+    ::selection {
+      background: var(--taaft-brand);
+      color: var(--taaft-brand-text);
+    }
+  </style>
+  </body>
+</html>

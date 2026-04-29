@@ -1,0 +1,176 @@
+---
+// Client-side filter panel — renders checkboxes, script handles the logic
+import { t, type Language } from '../lib/i18n';
+
+interface Props {
+  lang?: Language;
+}
+
+const { lang = 'en' } = Astro.props;
+const ui = t(lang);
+---
+<aside class="w-56 shrink-0 hidden lg:block">
+  <div class="sticky top-20 space-y-6 text-sm">
+
+    <div>
+      <h3 class="font-semibold mb-2 text-gray-700 dark:text-slate-300">{ui.labels.pricing}</h3>
+      <ul class="space-y-1.5">
+        {[
+          { val: 'free',        label: ui.pricing.free },
+          { val: 'freemium',    label: ui.pricing.freemium },
+          { val: 'paid',        label: ui.pricing.paid },
+          { val: 'open_source', label: ui.pricing.open_source },
+        ].map(({ val, label }) => (
+          <li>
+            <label class="flex items-center gap-2 cursor-pointer transition-colors text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-100">
+              <input type="checkbox" class="filter-check" data-filter-type="pricing-model" data-filter-val={val} />
+              {label}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-semibold mb-2 text-gray-700 dark:text-slate-300">{ui.labels.capabilities}</h3>
+      <ul class="space-y-1.5">
+        {[
+          { val: 'voice-cloning', label: ui.labels.voiceCloning,   attr: 'data-voice-cloning' },
+          { val: 'multilingual',  label: ui.labels.multilingual,    attr: 'data-multilingual' },
+          { val: 'realtime',      label: ui.labels.realTime,       attr: 'data-realtime' },
+          { val: 'open-source',   label: ui.labels.openSource,     attr: 'data-open-source' },
+        ].map(({ val, label }) => (
+          <li>
+            <label class="flex items-center gap-2 cursor-pointer transition-colors text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-100">
+              <input type="checkbox" class="filter-check" data-filter-type="cap" data-filter-val={val} />
+              {label}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-semibold mb-2 text-gray-700 dark:text-slate-300">{ui.labels.licensing}</h3>
+      <ul class="space-y-1.5">
+        {[
+          { val: 'commercial', label: ui.labels.commercialUse },
+          { val: 'youtube',    label: ui.labels.youtubeMonetization },
+          { val: 'game-use',   label: ui.labels.gameUse },
+          { val: 'clone',      label: ui.labels.voiceCloning },
+        ].map(({ val, label }) => (
+          <li>
+            <label class="flex items-center gap-2 cursor-pointer transition-colors text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-100">
+              <input type="checkbox" class="filter-check" data-filter-type="lic" data-filter-val={val} />
+              {label}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <button id="filter-reset" class="text-xs hover:underline transition-colors text-gray-400 hover:text-gray-700 dark:text-slate-500 dark:hover:text-slate-200">
+      {ui.labels.resetFilters}
+    </button>
+  </div>
+</aside>
+
+<script>
+  // Map filter-val → card data-attribute name
+  const CAP_ATTR: Record<string, string> = {
+    'voice-cloning': 'voiceCloning',
+    'multilingual':  'multilingual',
+    'chinese':       'chinese',
+    'realtime':      'realtime',
+    'open-source':   'openSource',
+  };
+  const LIC_ATTR: Record<string, string> = {
+    'commercial': 'commercial',
+    'youtube':    'youtube',
+    'game-use':   'gameUse',
+    'clone':      'clone',
+  };
+
+  function readParams() {
+    const p = new URLSearchParams(location.search);
+    return {
+      pricing: p.get('pricing')?.split(',').filter(Boolean) ?? [],
+      cap:     p.get('cap')?.split(',').filter(Boolean) ?? [],
+      lic:     p.get('lic')?.split(',').filter(Boolean) ?? [],
+    };
+  }
+
+  function writeParams(state: { pricing: string[]; cap: string[]; lic: string[] }) {
+    const p = new URLSearchParams();
+    if (state.pricing.length) p.set('pricing', state.pricing.join(','));
+    if (state.cap.length)     p.set('cap', state.cap.join(','));
+    if (state.lic.length)     p.set('lic', state.lic.join(','));
+    const qs = p.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  }
+
+  function applyFilters(state: { pricing: string[]; cap: string[]; lic: string[] }) {
+    let visible = 0;
+    document.querySelectorAll<HTMLElement>('[data-tool-card]').forEach((card) => {
+      const d = card.dataset;
+      const pricingOk = !state.pricing.length || state.pricing.includes(d.pricingModel!);
+      const capOk = !state.cap.length || state.cap.every((v) => {
+        const attr = CAP_ATTR[v];
+        return attr && d[attr] === 'true';
+      });
+      const licOk = !state.lic.length || state.lic.every((v) => {
+        const attr = LIC_ATTR[v];
+        return attr && d[attr] === 'true';
+      });
+      const show = pricingOk && capOk && licOk;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    const countEl = document.getElementById('tool-count');
+    if (countEl) countEl.textContent = String(visible);
+  }
+
+  function syncCheckboxes(state: { pricing: string[]; cap: string[]; lic: string[] }) {
+    document.querySelectorAll<HTMLInputElement>('.filter-check').forEach((cb) => {
+      const type = cb.dataset.filterType!;
+      const val  = cb.dataset.filterVal!;
+      cb.checked = type === 'pricing-model' ? state.pricing.includes(val)
+                 : type === 'cap'           ? state.cap.includes(val)
+                 : state.lic.includes(val);
+    });
+  }
+
+  function getState(): { pricing: string[]; cap: string[]; lic: string[] } {
+    const pricing: string[] = [];
+    const cap: string[] = [];
+    const lic: string[] = [];
+    document.querySelectorAll<HTMLInputElement>('.filter-check:checked').forEach((cb) => {
+      if (cb.dataset.filterType === 'pricing-model') pricing.push(cb.dataset.filterVal!);
+      else if (cb.dataset.filterType === 'cap') cap.push(cb.dataset.filterVal!);
+      else lic.push(cb.dataset.filterVal!);
+    });
+    return { pricing, cap, lic };
+  }
+
+  // Init from URL
+  const initial = readParams();
+  syncCheckboxes(initial);
+  applyFilters(initial);
+
+  // React to checkbox changes
+  document.addEventListener('change', (e) => {
+    if (!(e.target as Element).classList.contains('filter-check')) return;
+    const state = getState();
+    writeParams(state);
+    applyFilters(state);
+  });
+
+  // Reset
+  document.getElementById('filter-reset')?.addEventListener('click', () => {
+    const state = { pricing: [], cap: [], lic: [] };
+    syncCheckboxes(state);
+    writeParams(state);
+    applyFilters(state);
+  });
+</script>
