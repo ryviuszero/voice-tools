@@ -1,0 +1,94 @@
+name: Scheduled Data Update
+
+on:
+  schedule:
+    # Every Wednesday at 08:00 UTC
+    - cron: '0 8 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate data update report
+        run: npm run update-data -- --report reports/data-update-latest.md
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+
+      - name: Apply safe data updates
+        run: npm run update-data -- --write --report reports/data-update-write.md
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+
+      - name: Generate stale tools report
+        run: npm run stale-report -- --report reports/stale-tools.md
+
+      - name: Test
+        run: npm test
+
+      - name: Validate data
+        run: npm run validate
+
+      - name: Check Astro types
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload maintenance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-maintenance-reports
+          path: reports/*.md
+          if-no-files-found: warn
+
+      - name: Add report summary
+        run: |
+          {
+            echo "## Data maintenance reports"
+            echo ""
+            echo "Generated reports are attached as the \`data-maintenance-reports\` artifact."
+            echo ""
+            if [ -f reports/stale-tools.md ]; then
+              echo "### Stale tools"
+              sed -n '1,40p' reports/stale-tools.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create pull request for safe updates
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: codex/scheduled-data-update
+          delete-branch: true
+          title: "chore(data): apply scheduled safe updates"
+          commit-message: "chore(data): apply scheduled safe updates"
+          body: |
+            Automated data maintenance run.
+
+            This PR only includes tracked file changes produced by `npm run update-data -- --write`.
+            Maintenance reports are attached to the workflow run as artifacts.
+
+            Validation performed:
+            - `npm test`
+            - `npm run validate`
+            - `npm run check`
+            - `npm run build`
