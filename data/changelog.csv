@@ -46,7 +46,6 @@ date,tool_slug,change_type,description,description_zh,source_url
 2026-04-28,audacity,feature_added,"Added Audacity to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.audacityteam.org/
 2026-04-28,rask-ai,feature_added,"Added Rask AI to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.rask.ai/
 2026-04-28,rws-ai-dubbing,feature_added,"Added RWS AI Dubbing to strengthen category coverage","新增 RWS AI Dubbing 用于补齐分类覆盖",https://www.rws.com/localization/services/translation-services/video-and-audio-translation/ai-dubbing-and-vo/
-2026-04-28,seamlessm4t,feature_added,"Added SeamlessM4T to strengthen category coverage","新增工具用于补齐分类覆盖",https://github.com/facebookresearch/seamless_communication
 2026-04-28,daily,feature_added,"Added Daily to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.daily.co/
 2026-04-28,agora,feature_added,"Added Agora to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.agora.io/
 2026-04-28,twilio-voice,feature_added,"Added Twilio Voice to strengthen category coverage","新增工具用于补齐分类覆盖",https://www.twilio.com/en-us/voice

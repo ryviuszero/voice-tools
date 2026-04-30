@@ -11,9 +11,11 @@ import {
   canApplyDraft,
   changelogRowsToAppend,
   computeChangedFields,
+  evaluateGithubMaintenance,
   extractAiResponseText,
   formatVerifiedAtForYaml,
   generateRuleDraft,
+  githubRepoFromUrl,
   loadContentGuidelines,
   parseDotenv,
   parseArgs,
@@ -143,6 +145,15 @@ test('update-data report includes tool source and manual-review state', () => {
         error: 'rate limited',
         fallback_to_rules: true,
       },
+      githubMaintenance: {
+        repo: 'example/sample',
+        source_url: 'https://github.com/example/sample',
+        status: 'stale',
+        pushed_at: '2025-01-01T00:00:00Z',
+        age_days: 481,
+        stale_days_threshold: 183,
+        issue: 'sample: GitHub repo example/sample last pushed 2025-01-01T00:00:00Z, older than 183 days; remove candidate',
+      },
     },
   ], {
     write: false,
@@ -153,6 +164,8 @@ test('update-data report includes tool source and manual-review state', () => {
   assert.match(report, /Tool Data Update Report/);
   assert.match(report, /Sample \(sample\)/);
   assert.match(report, /Needs manual review: yes/);
+  assert.match(report, /GitHub remove candidates: 1/);
+  assert.match(report, /GitHub maintenance: stale \(example\/sample\), pushed_at 2025-01-01T00:00:00Z/);
   assert.match(report, /"provider": "openrouter"/);
   assert.match(report, /"status": 429/);
   assert.match(report, /https:\/\/example\.com\/pricing/);
@@ -363,6 +376,38 @@ test('update-data extracts text from OpenRouter chat completion responses', () =
   });
 
   assert.equal(text, '{"confidence":"high"}');
+});
+
+test('update-data flags open-source GitHub repos stale after 183 days', () => {
+  assert.equal(githubRepoFromUrl('https://github.com/facebookresearch/seamless_communication'), 'facebookresearch/seamless_communication');
+  assert.equal(githubRepoFromUrl('https://example.com/not-github'), undefined);
+
+  const stale = evaluateGithubMaintenance({
+    slug: 'sample',
+    repo: 'example/sample',
+    pushed_at: '2025-10-28T00:00:00Z',
+    archived: false,
+    now: new Date('2026-04-30T00:00:00Z'),
+  });
+  const active = evaluateGithubMaintenance({
+    slug: 'sample',
+    repo: 'example/sample',
+    pushed_at: '2025-10-29T00:00:00Z',
+    archived: false,
+    now: new Date('2026-04-30T00:00:00Z'),
+  });
+  const archived = evaluateGithubMaintenance({
+    slug: 'sample',
+    repo: 'example/sample',
+    pushed_at: '2026-01-01T00:00:00Z',
+    archived: true,
+    now: new Date('2026-04-30T00:00:00Z'),
+  });
+
+  assert.equal(stale.status, 'stale');
+  assert.match(stale.issue ?? '', /older than 183 days; remove candidate/);
+  assert.equal(active.status, 'ok');
+  assert.equal(archived.status, 'archived');
 });
 
 test('update-data AI prompt includes tool and workflow generation guidelines', () => {

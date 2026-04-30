@@ -21,6 +21,8 @@ const CHANGELOG_PATH = join(ROOT, 'data/changelog.csv');
 const DEFAULT_REPORT_PATH = join(ROOT, 'reports/data-update-latest.md');
 const GUIDELINE_MAX_CHARS = 24_000;
 const FETCH_TIMEOUT_MS = 15_000;
+const GITHUB_STALE_DAYS = 183;
+const GITHUB_STALE_MS = GITHUB_STALE_DAYS * 24 * 60 * 60 * 1000;
 const USER_AGENT = 'VoiceToolsDirectoryDataUpdater/0.1 (+https://voice.tools/about)';
 
 type ChangeType = 'pricing_change' | 'feature_added' | 'product_change' | 'model_release' | 'policy_change';
@@ -95,6 +97,18 @@ type AiCallLog = {
   fallback_to_rules: boolean;
 };
 
+type GithubMaintenance = {
+  repo?: string;
+  source_url?: string;
+  status: 'ok' | 'stale' | 'archived' | 'missing_repo' | 'fetch_failed';
+  pushed_at?: string;
+  archived?: boolean;
+  age_days?: number;
+  stale_days_threshold: number;
+  issue?: string;
+  error?: string;
+};
+
 type ToolResult = {
   tool: ToolFile;
   sources: SourceFetch[];
@@ -102,6 +116,7 @@ type ToolResult = {
   changedFields: string[];
   errors: string[];
   ai: AiCallLog;
+  githubMaintenance?: GithubMaintenance;
 };
 
 export type ChangelogRow = {
@@ -219,6 +234,143 @@ function parsePositiveInt(value: string | undefined, name: string): number {
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function daysBetweenDates(from: Date, to: Date): number {
+  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / 86_400_000));
+}
+
+export function githubRepoFromUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== 'github.com') return undefined;
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return undefined;
+    return `${parts[0]}/${parts[1].replace(/\.git$/, '')}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function githubSourceUrls(tool: ToolFile): string[] {
+  return [
+    tool.data.website,
+    tool.data.pricing?.pricing_url,
+    tool.data.github_metrics?.source_url,
+  ].filter((value): value is string => typeof value === 'string');
+}
+
+function githubRepoForTool(tool: ToolFile): string | undefined {
+  for (const url of githubSourceUrls(tool)) {
+    const repo = githubRepoFromUrl(url);
+    if (repo) return repo;
+  }
+  return undefined;
+}
+
+function isOpenSourceTool(tool: ToolFile): boolean {
+  return Boolean(tool.data.capabilities?.open_source);
+}
+
+export function evaluateGithubMaintenance(input: {
+  slug: string;
+  repo?: string;
+  pushed_at?: string;
+  archived?: boolean;
+  now?: Date;
+}): GithubMaintenance {
+  const threshold = GITHUB_STALE_DAYS;
+  if (!input.repo) {
+    return {
+      status: 'missing_repo',
+      stale_days_threshold: threshold,
+      issue: `${input.slug}: open-source tool has no GitHub repo URL to verify activity`,
+    };
+  }
+
+  if (!input.pushed_at) {
+    return {
+      repo: input.repo,
+      status: 'fetch_failed',
+      stale_days_threshold: threshold,
+      issue: `${input.slug}: GitHub repo fetch returned no pushed_at for ${input.repo}`,
+    };
+  }
+
+  const pushedAt = new Date(input.pushed_at);
+  const now = input.now ?? new Date();
+  const ageDays = Number.isNaN(pushedAt.getTime()) ? undefined : daysBetweenDates(pushedAt, now);
+  const base = {
+    repo: input.repo,
+    source_url: `https://github.com/${input.repo}`,
+    pushed_at: input.pushed_at,
+    archived: input.archived,
+    age_days: ageDays,
+    stale_days_threshold: threshold,
+  };
+
+  if (input.archived) {
+    return {
+      ...base,
+      status: 'archived',
+      issue: `${input.slug}: GitHub repo ${input.repo} is archived; remove candidate`,
+    };
+  }
+
+  if (pushedAt < new Date(now.getTime() - GITHUB_STALE_MS)) {
+    return {
+      ...base,
+      status: 'stale',
+      issue: `${input.slug}: GitHub repo ${input.repo} last pushed ${input.pushed_at}, older than ${threshold} days; remove candidate`,
+    };
+  }
+
+  return { ...base, status: 'ok' };
+}
+
+async function fetchGithubMaintenance(tool: ToolFile): Promise<GithubMaintenance | undefined> {
+  if (!isOpenSourceTool(tool)) return undefined;
+  const repo = githubRepoForTool(tool);
+  if (!repo) return evaluateGithubMaintenance({ slug: tool.slug });
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}`, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': USER_AGENT,
+      },
+    });
+    if (!res.ok) {
+      return {
+        repo,
+        source_url: `https://github.com/${repo}`,
+        status: 'fetch_failed',
+        stale_days_threshold: GITHUB_STALE_DAYS,
+        error: `HTTP ${res.status}`,
+        issue: `${tool.slug}: GitHub repo fetch failed for ${repo} (HTTP ${res.status})`,
+      };
+    }
+    const data = await res.json() as { pushed_at?: string; archived?: boolean };
+    return evaluateGithubMaintenance({
+      slug: tool.slug,
+      repo,
+      pushed_at: data.pushed_at,
+      archived: data.archived,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      repo,
+      source_url: `https://github.com/${repo}`,
+      status: 'fetch_failed',
+      stale_days_threshold: GITHUB_STALE_DAYS,
+      error: message,
+      issue: `${tool.slug}: GitHub repo fetch failed for ${repo} (${message})`,
+    };
+  }
 }
 
 export function canApplyDraft(draft: Draft, sources: SourceFetch[] = []): boolean {
@@ -784,8 +936,10 @@ export function buildMarkdownReport(results: ToolResult[], options: CliOptions, 
 
   const reviewCount = results.filter((result) => result.draft.needs_manual_review).length;
   const changedCount = results.filter((result) => result.changedFields.length > 0).length;
+  const removeCandidateCount = results.filter((result) => ['archived', 'stale'].includes(result.githubMaintenance?.status ?? '')).length;
   lines.push(`- Tools with suggested field changes: ${changedCount}`);
   lines.push(`- Tools needing manual review: ${reviewCount}`);
+  lines.push(`- GitHub remove candidates: ${removeCandidateCount}`);
   lines.push(`- Draft engines: ${summarizeEngines(results)}`);
   lines.push('');
 
@@ -796,6 +950,11 @@ export function buildMarkdownReport(results: ToolResult[], options: CliOptions, 
     lines.push(`- Confidence: ${result.draft.confidence}`);
     lines.push(`- Needs manual review: ${result.draft.needs_manual_review ? 'yes' : 'no'}`);
     lines.push(`- Suggested changes: ${result.changedFields.length ? result.changedFields.join(', ') : 'none'}`);
+    if (result.githubMaintenance) {
+      const github = result.githubMaintenance;
+      lines.push(`- GitHub maintenance: ${github.status}${github.repo ? ` (${github.repo})` : ''}${github.pushed_at ? `, pushed_at ${github.pushed_at}` : ''}`);
+      if (github.issue) lines.push(`  ${github.issue}`);
+    }
     if (result.errors.length) lines.push(`- Errors: ${result.errors.join('; ')}`);
     lines.push('');
     lines.push('### AI Call');
@@ -837,7 +996,10 @@ function summarizeEngines(results: ToolResult[]): string {
 
 async function processTool(tool: ToolFile, changelogRows: ChangelogRow[], options: CliOptions, runDate: string): Promise<ToolResult> {
   const sourceSpecs = uniqueSourceUrls(tool, changelogRows, options.maxPages);
-  const sources = await Promise.all(sourceSpecs.map((source) => fetchSource(source.url, source.kind)));
+  const [sources, githubMaintenance] = await Promise.all([
+    Promise.all(sourceSpecs.map((source) => fetchSource(source.url, source.kind))),
+    fetchGithubMaintenance(tool),
+  ]);
   const ruleDraft = generateRuleDraft(tool, sources, runDate);
   const { draft: aiDraft, log: aiLog } = await generateAiDraft(tool, sources, runDate);
   const draft = aiDraft ?? (ruleDraft.engine === 'rules' && resolveAiProvider()
@@ -845,7 +1007,8 @@ async function processTool(tool: ToolFile, changelogRows: ChangelogRow[], option
     : ruleDraft);
   const changedFields = computeChangedFields(tool, draft, sources);
   const errors = sources.filter((source) => !source.ok).map((source) => `${source.url}: ${source.error ?? source.status ?? 'failed'}`);
-  return { tool, sources, draft, changedFields, errors, ai: aiLog };
+  if (githubMaintenance?.issue) errors.push(githubMaintenance.issue);
+  return { tool, sources, draft, changedFields, errors, ai: aiLog, githubMaintenance };
 }
 
 async function main() {
