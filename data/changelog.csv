@@ -67,4 +67,5 @@ date,tool_slug,change_type,description,description_zh,source_url
 2026-04-28,finevoice,feature_added,"Added FineVoice to strengthen category coverage","新增工具用于补齐分类覆盖","https://finevoice.ai/"
 2026-04-28,w-okada-voice-changer,feature_added,"Added W-Okada Voice Changer to strengthen category coverage","新增工具用于补齐分类覆盖","https://github.com/w-okada/voice-changer"
 2026-04-28,so-vits-svc,feature_added,"Added so-vits-svc to strengthen category coverage","新增工具用于补齐分类覆盖","https://github.com/svc-develop-team/so-vits-svc"
+2026-05-01,subtitle-edit,feature_added,"Added Subtitle Edit for open-source subtitle editing, timing, and Whisper transcription workflows","新增 Subtitle Edit，用于开源字幕编辑、校时和 Whisper 转写流程","https://github.com/SubtitleEdit/subtitleedit"
 2026-04-29,ace-step-ui,feature_added,"Added ACE-Step UI for local ACE-Step 1.5 music generation","新增 ACE-Step UI，用于 ACE-Step 1.5 本地音乐生成","https://github.com/fspecii/ace-step-ui"
