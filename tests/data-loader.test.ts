@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from './test-utils.ts';
 import {
   changelogDescription,
@@ -26,6 +27,9 @@ test('loadCategories parses typed category rows sorted by sort_order', () => {
 });
 
 test('loadChangelog parses localized descriptions and newest entries first', () => {
+  const raw = readFileSync('data/changelog.csv', 'utf-8');
+  assert.doesNotMatch(raw, /\r/);
+
   const changelog = loadChangelog();
 
   assert.ok(changelog.length >= 1);

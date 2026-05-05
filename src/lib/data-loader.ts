@@ -36,7 +36,7 @@ export interface ChangelogEntry {
 
 function loadCSV<T extends Record<string, string>>(filename: string): T[] {
   const filePath = join(process.cwd(), 'data', filename);
-  const content = readFileSync(filePath, 'utf-8');
+  const content = readFileSync(filePath, 'utf-8').replace(/\r\n?/g, '\n');
 
   const result = Papa.parse<T>(content, {
     header: true,

@@ -170,6 +170,7 @@ function removeChangelogRows(slugs: Set<string>): number {
   const csv = Papa.unparse(rows, {
     columns: ['date', 'tool_slug', 'change_type', 'description', 'description_zh', 'source_url'],
     quotes: true,
+    newline: '\n',
   });
   writeFileSync(CHANGELOG_PATH, `${csv}\n`, 'utf-8');
   return removed;

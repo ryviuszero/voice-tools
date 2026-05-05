@@ -923,6 +923,7 @@ function writeChangelogRows(rows: ChangelogRow[]): void {
   const csv = Papa.unparse(rows, {
     columns: ['date', 'tool_slug', 'change_type', 'description', 'description_zh', 'source_url'],
     quotes: true,
+    newline: '\n',
   });
   writeFileSync(CHANGELOG_PATH, `${csv}\n`, 'utf-8');
 }
