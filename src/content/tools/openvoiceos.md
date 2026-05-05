@@ -54,7 +54,7 @@ portability:
     generated assets still need separate backup and license review.
 alternatives:
   - rasa
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -131,7 +131,7 @@ video:
 github_metrics:
   repo: OpenVoiceOS/OpenVoiceOS
   source_url: 'https://github.com/OpenVoiceOS/OpenVoiceOS'
-  captured_at: 2026-04-29T00:00:00.000Z
+  captured_at: 2026-04-29
   stars: 35
   forks: 2
   watchers: 3
@@ -147,6 +147,30 @@ github_metrics:
   note: >-
     GitHub public metrics captured for maintenance screening; verify repository
     activity before adopting it for production.
+traffic_estimates:
+  source: Similarweb public data endpoint
+  source_url: 'https://data.similarweb.com/api/v1/data?domain=openvoiceos.org'
+  captured_at: 2026-05-05
+  period_label: 2026-03
+  visits_last_month: 14619
+  monthly_visits:
+    - month: 2026-01
+      visits: 21548
+      is_partial: false
+    - month: 2026-02
+      visits: 13414
+      is_partial: false
+    - month: 2026-03
+      visits: 14619
+      is_partial: false
+  bounce_rate_percent: 45.29
+  pages_per_visit: 1.69
+  avg_visit_duration: '0:48'
+  global_rank: 1713940
+  country_rank: 1327210
+  note: 'Public web-traffic estimate; use directionally, not as audited analytics.'
+  domain_created_at: '2023-03-14'
+  domain_created_source_url: 'https://rdap.publicinterestregistry.org/rdap/domain/openvoiceos.org'
 ---
 ## Decide whether it should be your main tool
 

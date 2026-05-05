@@ -76,7 +76,7 @@ portability:
 github_metrics:
   repo: jamiepine/voicebox
   source_url: 'https://github.com/jamiepine/voicebox'
-  captured_at: 2026-04-28T00:00:00.000Z
+  captured_at: 2026-04-28
   stars: 23800
   forks: 2800
   open_issues: 273
@@ -99,7 +99,7 @@ alternatives:
   - elevenlabs
   - chatterbox
   - f5-tts
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -204,6 +204,25 @@ i18n:
 
 
       即使本地生成成本低，也不要跳过全片试听。长文本拼接、跨段落语气、口误修正和人物一致性都需要人工检查。
+traffic_estimates:
+  source: Similarweb public data endpoint
+  source_url: 'https://data.similarweb.com/api/v1/data?domain=voicebox.sh'
+  captured_at: 2026-05-05
+  period_label: 2026-03
+  visits_last_month: 300110
+  monthly_visits:
+    - month: 2026-02
+      visits: 216291
+      is_partial: false
+    - month: 2026-03
+      visits: 300110
+      is_partial: false
+  bounce_rate_percent: 48.37
+  pages_per_visit: 1.75
+  avg_visit_duration: '0:48'
+  global_rank: 178822
+  country_rank: 49078
+  note: 'Public web-traffic estimate; use directionally, not as audited analytics.'
 ---
 ## Decide whether it should be your main local voice tool
 
