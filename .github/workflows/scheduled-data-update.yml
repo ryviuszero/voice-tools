@@ -55,7 +55,7 @@ jobs:
         run: npm run build
 
       - name: Upload maintenance reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: data-maintenance-reports
           path: reports/*.md
@@ -75,7 +75,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create pull request for safe updates
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: codex/scheduled-data-update
           delete-branch: true

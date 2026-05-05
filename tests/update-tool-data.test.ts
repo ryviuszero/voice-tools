@@ -9,6 +9,7 @@ import {
   buildAiPrompt,
   buildMarkdownReport,
   canApplyDraft,
+  canApplySourceReview,
   changelogRowsToAppend,
   computeChangedFields,
   evaluateGithubMaintenance,
@@ -176,7 +177,15 @@ test('update-data formats verified_at as an unquoted YAML date', () => {
   assert.match(formatVerifiedAtForYaml('verified_at: 2026-04-27T00:00:00.000Z\n'), /^verified_at: 2026-04-27$/m);
 });
 
-test('update-data rule drafts do not write verified_at or editorial fields', () => {
+test('update-data rule drafts do not write tool fields', () => {
+  const sources = [{
+    url: 'https://example.com/pricing',
+    kind: 'pricing' as const,
+    ok: true,
+    status: 200,
+    text: 'Source reviewed.',
+    needs_manual_review: false,
+  }];
   const next = applyDraftToData(sampleTool.data, {
     verified_at: '2026-04-27',
     confidence: 'medium',
@@ -185,11 +194,18 @@ test('update-data rule drafts do not write verified_at or editorial fields', () 
     engine: 'rules',
     licensing: { notes: 'Generic rule-generated notes' },
     gotchas: ['Generic gotcha'],
-  });
+  }, sources);
 
   assert.equal(next.licensing.notes, 'Old notes');
   assert.deepEqual(next.gotchas, undefined);
   assert.equal(next.verified_at.toISOString().slice(0, 10), '2026-01-01');
+  assert.equal(canApplySourceReview({
+    verified_at: '2026-04-27',
+    confidence: 'medium',
+    needs_manual_review: false,
+    notes: [],
+    engine: 'rules',
+  }, sources), true);
 });
 
 test('update-data refuses writes when sources failed or need review', () => {
@@ -261,7 +277,7 @@ test('update-data low-confidence AI body drafts do not replace markdown body', (
   }
 });
 
-test('update-data appends changelog only for safe substantive changes', () => {
+test('update-data appends changelog for safe substantive changes and source reviews', () => {
   const safeDraft = {
     verified_at: '2026-04-27',
     confidence: 'high' as const,
@@ -306,15 +322,26 @@ test('update-data appends changelog only for safe substantive changes', () => {
     {
       tool: sampleTool,
       sources: safeSources,
-      draft: { ...safeDraft, engine: 'rules' },
-      changedFields: ['tagline'],
+      draft: {
+        ...safeDraft,
+        engine: 'rules',
+        changelog: {
+          ...safeDraft.changelog,
+          change_type: 'pricing_change' as const,
+          description: 'Sample data reviewed from official source pages',
+        },
+      },
+      changedFields: ['verified_at'],
       errors: [],
       ai: { requested: false, fallback_to_rules: false },
     },
   ]);
 
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].description, 'Sample changed');
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].description, 'Sample data reviewed from official source pages');
+  assert.equal(rows[1].description, 'Sample changed');
+  assert.equal(rows[2].change_type, 'product_change');
+  assert.equal(rows[2].description, 'Sample data reviewed from official source pages');
 });
 
 test('update-data uses latest changelog sources before older history', () => {

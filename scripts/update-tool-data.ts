@@ -381,6 +381,13 @@ export function canApplyDraft(draft: Draft, sources: SourceFetch[] = []): boolea
     && sources.every((source) => source.ok && !source.needs_manual_review);
 }
 
+export function canApplySourceReview(draft: Draft, sources: SourceFetch[] = []): boolean {
+  return Boolean(draft.verified_at)
+    && !draft.needs_manual_review
+    && sources.length > 0
+    && sources.every((source) => source.ok && !source.needs_manual_review);
+}
+
 function readTools(onlySlug?: string): ToolFile[] {
   const tools = readdirSync(TOOLS_DIR)
     .filter((file) => file.endsWith('.md'))
@@ -837,7 +844,7 @@ export function applyDraftToData(data: Record<string, any>, draft: Draft, source
   const next = structuredClone(data);
 
   // Rule drafts are intentionally conservative: they may surface useful hints in
-  // the report, but only trusted AI drafts should overwrite rich editorial data.
+  // the report and changelog, but only trusted AI drafts should overwrite tool data.
   if (!canApplyDraft(draft, sources)) return next;
 
   if (draft.verified_at) next.verified_at = new Date(`${draft.verified_at}T00:00:00.000Z`);
@@ -866,11 +873,26 @@ export function hasSubstantiveFieldChanges(changedFields: string[]): boolean {
   return changedFields.some((field) => field !== 'verified_at');
 }
 
+function sourceReviewChangelog(row: ChangelogRow, toolName: string): ChangelogRow {
+  return {
+    ...row,
+    change_type: 'product_change',
+    description: `${toolName} data reviewed from official source pages`,
+    description_zh: `${toolName} 数据已根据官方来源页面复核`,
+  };
+}
+
 export function changelogRowsToAppend(results: ToolResult[]): ChangelogRow[] {
-  return results
-    .filter((result) => canApplyDraft(result.draft, result.sources))
-    .filter((result) => hasSubstantiveFieldChanges(result.changedFields))
-    .flatMap((result) => result.draft.changelog ? [result.draft.changelog] : []);
+  const rows: ChangelogRow[] = [];
+  for (const result of results) {
+    if (!result.draft.changelog) continue;
+    if (canApplyDraft(result.draft, result.sources) && hasSubstantiveFieldChanges(result.changedFields)) {
+      rows.push(result.draft.changelog);
+    } else if (canApplySourceReview(result.draft, result.sources)) {
+      rows.push(sourceReviewChangelog(result.draft.changelog, String(result.tool.data.name ?? result.tool.slug)));
+    }
+  }
+  return rows;
 }
 
 export function formatVerifiedAtForYaml(markdown: string): string {
@@ -907,19 +929,8 @@ function writeChangelogRows(rows: ChangelogRow[]): void {
 
 function appendChangelogRowsToFile(rows: ChangelogRow[]): void {
   if (rows.length === 0) return;
-  if (!existsSync(CHANGELOG_PATH)) {
-    writeChangelogRows(rows);
-    return;
-  }
-
-  const csv = Papa.unparse(rows, {
-    header: false,
-    columns: ['date', 'tool_slug', 'change_type', 'description', 'description_zh', 'source_url'],
-    quotes: true,
-  });
-  const current = readFileSync(CHANGELOG_PATH, 'utf-8');
-  const prefix = current.endsWith('\n') ? '' : '\n';
-  writeFileSync(CHANGELOG_PATH, `${current}${prefix}${csv}\n`, 'utf-8');
+  const existing = existsSync(CHANGELOG_PATH) ? loadChangelogRows() : [];
+  writeChangelogRows([...existing, ...rows]);
 }
 
 export function buildMarkdownReport(results: ToolResult[], options: CliOptions, runDate = todayIso()): string {
