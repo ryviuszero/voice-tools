@@ -54,7 +54,7 @@ portability:
     generated assets still need separate backup and license review.
 alternatives:
   - whisperx
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -128,7 +128,7 @@ video:
 traffic_estimates:
   source: HypeStat public traffic analysis
   source_url: 'https://hypestat.com/info/speechbrain.github.io'
-  captured_at: 2026-04-29T00:00:00.000Z
+  captured_at: 2026-04-29
   period_label: Latest public estimate
   visits_last_month: 5400
   monthly_visits: []
@@ -138,6 +138,26 @@ traffic_estimates:
   note: >-
     Public HypeStat estimate; use directionally and prefer direct analytics when
     available.
+github_metrics:
+  repo: speechbrain/speechbrain
+  source_url: 'https://github.com/speechbrain/speechbrain'
+  captured_at: 2026-05-05
+  stars: 11509
+  forks: 1685
+  watchers: 135
+  open_issues: 178
+  last_commit_at: 2026-05-03
+  latest_release_at: 2026-03-30
+  has_releases: true
+  license: Apache-2.0
+  primary_language: Python
+  archived: false
+  signals:
+    - popular
+    - maintained
+  note: >-
+    GitHub public repository metrics captured for maintenance screening; verify
+    repository activity before relying on it for production choices.
 ---
 ## Decide whether it should be your main tool
 

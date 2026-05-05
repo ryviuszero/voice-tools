@@ -55,7 +55,7 @@ portability:
 alternatives:
   - beatoven-ai
   - audiocraft
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - new
 i18n:
@@ -125,6 +125,30 @@ video:
   i18n:
     zh:
       title: OptimizerAI 音效生成演示
+traffic_estimates:
+  source: Similarweb public data endpoint
+  source_url: 'https://data.similarweb.com/api/v1/data?domain=optimizerai.xyz'
+  captured_at: 2026-05-05
+  period_label: 2026-03
+  visits_last_month: 33672
+  monthly_visits:
+    - month: 2026-01
+      visits: 44906
+      is_partial: false
+    - month: 2026-02
+      visits: 50633
+      is_partial: false
+    - month: 2026-03
+      visits: 33672
+      is_partial: false
+  bounce_rate_percent: 34.16
+  pages_per_visit: 3.61
+  avg_visit_duration: '0:52'
+  global_rank: 702118
+  country_rank: 354331
+  note: 'Public web-traffic estimate; use directionally, not as audited analytics.'
+  domain_created_at: '2023-07-19'
+  domain_created_source_url: 'https://rdap.org/domain/optimizerai.xyz'
 ---
 ## Decide whether it should be your main tool
 

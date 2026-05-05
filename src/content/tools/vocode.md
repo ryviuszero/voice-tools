@@ -55,7 +55,7 @@ portability:
 alternatives:
   - pipecat
   - livekit
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -128,6 +128,25 @@ video:
   i18n:
     zh:
       title: Vocode 语音助手构建教程
+github_metrics:
+  repo: vocodedev/vocode-core
+  source_url: 'https://github.com/vocodedev/vocode-core'
+  captured_at: 2026-05-05
+  stars: 3735
+  forks: 652
+  watchers: 49
+  open_issues: 3
+  last_commit_at: 2024-11-15
+  latest_release_at: 2024-06-18
+  has_releases: true
+  license: MIT
+  primary_language: Python
+  archived: false
+  signals:
+    - dormant
+  note: >-
+    GitHub public repository metrics captured for maintenance screening; verify
+    repository activity before relying on it for production choices.
 ---
 ## Decide whether it should be your main tool
 

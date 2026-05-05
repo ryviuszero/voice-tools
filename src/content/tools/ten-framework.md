@@ -57,7 +57,7 @@ portability:
 alternatives:
   - pipecat
   - livekit
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -131,6 +131,26 @@ video:
   i18n:
     zh:
       title: TEN Framework 与 TEN Agent 入门演示
+github_metrics:
+  repo: TEN-framework/ten-framework
+  source_url: 'https://github.com/TEN-framework/ten-framework'
+  captured_at: 2026-05-05
+  stars: 10468
+  forks: 1263
+  watchers: 69
+  open_issues: 205
+  last_commit_at: 2026-04-30
+  latest_release_at: 2026-04-02
+  has_releases: true
+  license: Other
+  primary_language: Python
+  archived: false
+  signals:
+    - popular
+    - maintained
+  note: >-
+    GitHub public repository metrics captured for maintenance screening; verify
+    repository activity before relying on it for production choices.
 ---
 ## Decide whether it should be your main tool
 

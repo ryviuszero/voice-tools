@@ -53,7 +53,7 @@ portability:
     generated assets still need separate backup and license review.
 alternatives:
   - botpress
-verified_at: 2026-04-28T00:00:00.000Z
+verified_at: 2026-04-28
 badges:
   - open_source
   - new
@@ -129,7 +129,7 @@ video:
 github_metrics:
   repo: RasaHQ/rasa
   source_url: 'https://github.com/RasaHQ/rasa'
-  captured_at: 2026-04-29T00:00:00.000Z
+  captured_at: 2026-04-29
   stars: 21144
   forks: 4909
   watchers: 352
@@ -147,6 +147,22 @@ github_metrics:
   note: >-
     GitHub public metrics captured for maintenance screening; verify repository
     activity before adopting it for production.
+traffic_estimates:
+  source: Similarweb public data endpoint
+  source_url: 'https://data.similarweb.com/api/v1/data?domain=opensource.rasa.com'
+  captured_at: 2026-05-05
+  period_label: 2026-02
+  visits_last_month: 293
+  monthly_visits:
+    - month: 2026-02
+      visits: 293
+      is_partial: false
+  bounce_rate_percent: 0
+  pages_per_visit: 0
+  avg_visit_duration: '0:00'
+  note: 'Public web-traffic estimate; use directionally, not as audited analytics.'
+  domain_created_at: '1996-04-26'
+  domain_created_source_url: 'https://rdap.org/domain/rasa.com'
 ---
 ## Decide whether it should be your main tool
 
