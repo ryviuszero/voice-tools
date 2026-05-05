@@ -6,6 +6,10 @@ on:
     - cron: '0 9 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -20,4 +24,42 @@ jobs:
       - run: npm ci
 
       - name: Check tool website URLs
-        run: npm run verify-tools
+        run: npm run verify-tools -- --report reports/link-check.md --remove-dead --exit-zero
+
+      - name: Upload link report
+        uses: actions/upload-artifact@v7
+        with:
+          name: link-check-report
+          path: reports/link-check.md
+          if-no-files-found: warn
+
+      - name: Add report summary
+        run: |
+          {
+            echo "## Tool link verification"
+            echo ""
+            if [ -f reports/link-check.md ]; then
+              sed -n '1,80p' reports/link-check.md
+            else
+              echo "No report generated."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create pull request for removal candidates
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: codex/remove-dead-tool-links
+          delete-branch: true
+          title: "chore(data): remove tools with dead website links"
+          commit-message: "chore(data): remove tools with dead website links"
+          draft: always-true
+          add-paths: |
+            src/content/tools
+            public/logos
+            data/changelog.csv
+          body: |
+            Automated link verification found tool website URLs that returned confirmed hard failures.
+
+            This draft PR removes only tools whose website returned a confirmed 404 or 410 after the checker retried with GET.
+
+            The workflow also uploads `link-check-report` with blocked and transient URLs that should be reviewed manually but were not removed automatically.
