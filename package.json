@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build && npx pagefind --site dist --output-path dist/pagefind",
     "check": "astro check",
-    "preview": "astro preview",
+    "preview": "npm run build && wrangler dev",
     "test": "tsx tests/run-tests.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -17,9 +17,12 @@
     "update-data": "tsx scripts/update-tool-data.ts",
     "stale-report": "tsx scripts/generate-stale-report.ts",
     "audit-tools": "tsx scripts/audit-tool-research.ts",
-    "verify-tools": "tsx scripts/verify-tools.ts"
+    "verify-tools": "tsx scripts/verify-tools.ts",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "12",
     "@astrojs/sitemap": "^3.7.2",
     "@astrojs/tailwind": "^5.1.0",
     "astro": "^5.6.0",
@@ -34,6 +37,7 @@
     "pagefind": "^1.5.2",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "wrangler": "^4.87.0"
   }
 }
