@@ -28,7 +28,15 @@ test('traffic parseArgs keeps dry-run as a no-write mode', () => {
 
   assert.equal(options.slug, 'sample');
   assert.equal(options.dryRun, true);
+  assert.equal(options.missingOnly, false);
   assert.equal(shouldSaveTrafficEstimate(options), false);
+});
+
+test('traffic parseArgs supports missing-only updates', () => {
+  const options = parseArgs(['--missing-only']);
+
+  assert.equal(options.missingOnly, true);
+  assert.equal(options.dryRun, false);
 });
 
 test('traffic saveTool preserves verified_at date formatting and markdown body', () => {

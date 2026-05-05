@@ -6,6 +6,7 @@
  *   npm run fetch-traffic
  *   npm run fetch-traffic -- --slug elevenlabs
  *   npm run fetch-traffic -- --dry-run
+ *   npm run fetch-traffic -- --missing-only
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -62,14 +63,17 @@ export type CliOptions = {
   slug?: string;
   dryRun: boolean;
   domainCreatedOnly: boolean;
+  missingOnly: boolean;
 };
 
 export function parseArgs(argv: string[]): CliOptions {
-  const options: CliOptions = { dryRun: false, domainCreatedOnly: false };
+  const options: CliOptions = { dryRun: false, domainCreatedOnly: false, missingOnly: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--dry-run') {
       options.dryRun = true;
+    } else if (arg === '--missing-only') {
+      options.missingOnly = true;
     } else if (arg === '--domain-created-only') {
       options.domainCreatedOnly = true;
     } else if (arg === '--slug') {
@@ -563,6 +567,10 @@ async function main() {
 
   console.log(`Fetching public traffic estimates for ${tools.length} tool(s)${options.dryRun ? ' [dry-run]' : ''}...`);
   for (const tool of tools) {
+    if (options.missingOnly && tool.data.traffic_estimates) {
+      console.log(`- ${tool.slug}: skipped existing traffic_estimates`);
+      continue;
+    }
     const result = options.domainCreatedOnly
       ? await fetchDomainCreatedForTool(tool)
       : await fetchTrafficEstimate(tool, capturedAt);

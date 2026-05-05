@@ -14,6 +14,7 @@
     "validate": "tsx scripts/validate-csvs.ts",
     "fetch-logos": "tsx scripts/fetch-logos.ts",
     "fetch-traffic": "tsx scripts/fetch-traffic-estimates.ts",
+    "fetch-github-metrics": "tsx scripts/fetch-github-metrics.ts",
     "update-data": "tsx scripts/update-tool-data.ts",
     "stale-report": "tsx scripts/generate-stale-report.ts",
     "audit-tools": "tsx scripts/audit-tool-research.ts",

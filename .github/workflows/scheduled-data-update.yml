@@ -39,6 +39,14 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
 
+      - name: Fill missing GitHub metrics
+        run: npm run fetch-github-metrics -- --missing-only
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Fill missing traffic estimates
+        run: npm run fetch-traffic -- --missing-only
+
       - name: Generate stale tools report
         run: npm run stale-report -- --report reports/stale-tools.md
 
@@ -84,8 +92,13 @@ jobs:
           body: |
             Automated data maintenance run.
 
-            This PR only includes tracked file changes produced by `npm run update-data -- --write`.
+            This PR only includes tracked file changes produced by scheduled safe data maintenance.
             Maintenance reports are attached to the workflow run as artifacts.
+
+            Data update steps:
+            - `npm run update-data -- --write`
+            - `npm run fetch-github-metrics -- --missing-only`
+            - `npm run fetch-traffic -- --missing-only`
 
             Validation performed:
             - `npm test`
