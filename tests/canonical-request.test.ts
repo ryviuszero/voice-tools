@@ -25,3 +25,9 @@ test('canonical request redirect leaves canonical urls alone', () => {
 
   assert.equal(redirectURL, undefined);
 });
+
+test('canonical request redirect leaves local http urls alone', () => {
+  const redirectURL = canonicalRedirectURL(new Request('http://localhost:4321/tools/krisp/'));
+
+  assert.equal(redirectURL, undefined);
+});
