@@ -17,13 +17,15 @@ test('language helpers detect and build localized paths', () => {
   assert.equal(langFromPath('/zh'), 'zh');
   assert.equal(langFromPath('/zh/tools/vapi'), 'zh');
 
-  assert.equal(localizedPath('/tools/vapi', 'en'), '/tools/vapi');
-  assert.equal(localizedPath('tools/vapi', 'en'), '/tools/vapi');
-  assert.equal(localizedPath('/', 'zh'), '/zh');
-  assert.equal(localizedPath('/tools/vapi', 'zh'), '/zh/tools/vapi');
+  assert.equal(localizedPath('/tools/vapi', 'en'), '/tools/vapi/');
+  assert.equal(localizedPath('tools/vapi', 'en'), '/tools/vapi/');
+  assert.equal(localizedPath('/', 'zh'), '/zh/');
+  assert.equal(localizedPath('/tools/vapi', 'zh'), '/zh/tools/vapi/');
+  assert.equal(localizedPath('/llms.txt', 'en'), '/llms.txt');
+  assert.equal(localizedPath('/compare?tools=vapi', 'zh'), '/zh/compare/?tools=vapi');
 
-  assert.equal(alternatePath('/zh/tools/vapi/', 'en'), '/tools/vapi');
-  assert.equal(alternatePath('/tools/vapi/', 'zh'), '/zh/tools/vapi');
+  assert.equal(alternatePath('/zh/tools/vapi/', 'en'), '/tools/vapi/');
+  assert.equal(alternatePath('/tools/vapi/', 'zh'), '/zh/tools/vapi/');
 });
 
 test('format helpers return localized labels and prices', () => {
@@ -101,7 +103,7 @@ test('localized markdown renderer supports common blocks and escapes unsafe HTML
   assert.match(html, /<h2 id="标题">标题<\/h2>/);
   assert.match(html, /<strong>重点<\/strong>/);
   assert.match(html, /<code>code<\/code>/);
-  assert.match(html, /<a href="\/tools\/vapi">链接<\/a>/);
+  assert.match(html, /<a href="\/tools\/vapi\/">链接<\/a>/);
   assert.match(html, /<ul><li>第一项<\/li><li>&lt;script&gt;alert\(1\)&lt;\/script&gt;<\/li><\/ul>/);
   assert.match(html, /<ol><li>第一步<\/li><li>第二步<\/li><\/ol>/);
 });
@@ -113,7 +115,7 @@ test('localized markdown renderer blocks unsafe link protocols', () => {
 [unsafe](javascript:alert)
 `);
 
-  assert.match(html, /<a href="\/tools\/vapi">safe<\/a>/);
+  assert.match(html, /<a href="\/tools\/vapi\/">safe<\/a>/);
   assert.match(html, /<a href="https:\/\/example\.com\?a=1&amp;b=2">external<\/a>/);
   assert.match(html, /<a href="#">unsafe<\/a>/);
   assert.doesNotMatch(html, /javascript:/);

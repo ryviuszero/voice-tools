@@ -29,12 +29,12 @@ const jsonLd = {
   '@type': 'ItemList',
   name: `${category.name_en} voice AI tools`,
   description: category.description_en,
-  url: `https://voice.tools/category/${category.slug}/`,
+  url: `https://voice-tools.com/category/${category.slug}/`,
   numberOfItems: tools.length,
   itemListElement: tools.map((tool, index) => ({
     '@type': 'ListItem',
     position: index + 1,
-    url: `https://voice.tools/tools/${tool.slug}/`,
+    url: `https://voice-tools.com/tools/${tool.slug}/`,
     name: tool.data.name,
     description: tool.data.tagline,
   })),
@@ -70,7 +70,7 @@ const jsonLd = {
           {tools.map((tool) => <ToolCard tool={tool} />)}
         </ul>
         {tools.length === 0 && (
-          <p class="text-gray-400 text-center py-12">No tools yet. <a href="/submit" class="underline">Submit one →</a></p>
+          <p class="text-gray-400 text-center py-12">No tools yet. <a href="/submit/" class="underline">Submit one →</a></p>
         )}
       </div>
     </div>

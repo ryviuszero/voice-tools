@@ -15,9 +15,9 @@ const lang = 'zh';
     <div id="compare-empty" class="hidden text-center py-20 space-y-4">
       <p class="text-gray-400">还没有选择工具。浏览工具并点击“+ 对比”即可添加。</p>
       <div class="flex gap-3 justify-center">
-        <a href="/zh/for-creators" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">创作者</a>
-        <a href="/zh/for-game-devs" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">游戏开发</a>
-        <a href="/zh/for-voice-ai" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">Voice AI</a>
+        <a href="/zh/for-creators/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">创作者</a>
+        <a href="/zh/for-game-devs/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">游戏开发</a>
+        <a href="/zh/for-voice-ai/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">Voice AI</a>
       </div>
     </div>
     <div id="compare-table" class="hidden overflow-x-auto"></div>
@@ -86,7 +86,7 @@ const lang = 'zh';
       { label: '注意事项', fn: (t) => String(t.i18n?.zh?.gotchas?.length ?? t.gotchas?.length ?? 0) },
       { label: '声音模型导出', fn: (t) => t.portability ? bool(t.portability.voice_model_export) : '-' },
     ];
-    const cols = tools.map((t) => `<th class="px-4 py-3 text-left font-semibold min-w-40"><a href="/zh/tools/${escapeAttr(encodeURIComponent(t.slug))}" class="hover:underline">${escapeHtml(displayName(t))}</a></th>`).join('');
+    const cols = tools.map((t) => `<th class="px-4 py-3 text-left font-semibold min-w-40"><a href="/zh/tools/${escapeAttr(encodeURIComponent(t.slug))}/" class="hover:underline">${escapeHtml(displayName(t))}</a></th>`).join('');
     const bodyRows = rows.map(({ label, fn }) => {
       if (label === '授权' || label === '能力' || label === '风险提示') return `<tr class="bg-gray-50"><td colspan="${tools.length + 1}" class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">${escapeHtml(label)}</td></tr>`;
       const vals = tools.map((t) => {

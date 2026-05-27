@@ -21,9 +21,9 @@ const featuredWorkflows  = (await getCollection('workflows'))
 const footerLinks = [
   GITHUB_BASE_URL && { href: GITHUB_BASE_URL, label: 'GitHub' },
   { href: '/llms.txt', label: 'llms.txt' },
-  { href: '/about', label: 'About' },
-  { href: '/submit', label: 'Submit a Tool' },
-  { href: '/workflows', label: 'Workflows' },
+  { href: '/about/', label: 'About' },
+  { href: '/submit/', label: 'Submit a Tool' },
+  { href: '/workflows/', label: 'Workflows' },
 ].filter(Boolean) as Array<{ href: string; label: string }>;
 
 const toolNameBySlug = new Map(allTools.map((t) => [t.slug, t.data.name]));
@@ -56,11 +56,11 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'Voice Tools Directory',
-  url: 'https://voice.tools',
+  url: 'https://voice-tools.com/',
   description: 'Curated voice AI tools for creators, game developers, and voice AI builders.',
   potentialAction: {
     '@type': 'SearchAction',
-    target: { '@type': 'EntryPoint', urlTemplate: 'https://voice.tools/?q={search_term_string}' },
+    target: { '@type': 'EntryPoint', urlTemplate: 'https://voice-tools.com/?q={search_term_string}' },
     'query-input': 'required name=search_term_string',
   },
 };
@@ -136,17 +136,17 @@ const jsonLd = {
 
         <!-- Segment buttons -->
         <div class="flex flex-wrap gap-3">
-          <a href="/for-creators"
+          <a href="/for-creators/"
              data-nav-group-option="creators"
              class="btn-neon btn-neon-creator inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
             🎬 For Creators
           </a>
-          <a href="/for-game-devs"
+          <a href="/for-game-devs/"
              data-nav-group-option="game_devs"
              class="taaft-secondary inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
             🎮 For Game Devs
           </a>
-          <a href="/for-voice-ai"
+          <a href="/for-voice-ai/"
              data-nav-group-option="voice_ai_builders"
              class="taaft-secondary inline-flex items-center gap-2 px-5 py-2.5 font-semibold transition-colors">
             🤖 For Voice AI Builders
@@ -182,7 +182,7 @@ const jsonLd = {
       <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {featuredCategories.map((cat) => (
           <li>
-            <a href={`/category/${cat.slug}`} class="grid h-full min-h-24 grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-4 p-4 glass-card">
+            <a href={`/category/${cat.slug}/`} class="grid h-full min-h-24 grid-cols-[3.75rem_minmax(0,1fr)] items-start gap-4 p-4 glass-card">
               <span class="inline-flex h-14 w-14 items-center justify-center border-2 border-[#2E2E2E] bg-[#242424] text-center text-xs leading-tight text-[#FF6B00]">
                 {cat.icon}
               </span>
@@ -213,7 +213,7 @@ const jsonLd = {
                 </time>
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                  <a href={`/tools/${entry.tool_slug}`}
+                  <a href={`/tools/${entry.tool_slug}/`}
                      class="text-sm font-medium transition-colors
                             text-gray-900 hover:text-indigo-600
                             dark:text-slate-100 dark:hover:text-[#818cf8]">
@@ -232,7 +232,7 @@ const jsonLd = {
               </li>
             ))}
           </ul>
-          <a href="/changelog"
+          <a href="/changelog/"
              class="taaft-tag text-sm mt-4 inline-block transition-colors
                     text-orange-600 hover:text-orange-700
                     dark:text-[#fb923c] dark:hover:text-[#fdba74]">
@@ -259,7 +259,7 @@ const jsonLd = {
                       class="w-6 h-6 rounded object-contain shrink-0 bg-gray-100 dark:bg-white/[0.06]"
                     />
                     <div class="flex-1 min-w-0">
-                      <a href={`/tools/${tool.slug}`}
+                      <a href={`/tools/${tool.slug}/`}
                          class="font-display text-base font-black transition-colors
                                 text-gray-900 hover:text-indigo-600
                                 dark:text-slate-100 dark:hover:text-[#818cf8]">
@@ -278,7 +278,7 @@ const jsonLd = {
             </li>
           ))}
         </ul>
-        <a href="/for-creators"
+        <a href="/for-creators/"
            class="taaft-tag text-sm mt-4 inline-block transition-colors
                   text-indigo-600 hover:text-indigo-700
                   dark:text-[#818cf8] dark:hover:text-[#a5b4fc]">
@@ -296,7 +296,7 @@ const jsonLd = {
         {featuredWorkflows.map((workflow) => {
           const meta = WORKFLOW_GROUP_META[workflow.data.user_group];
           return (
-            <a href={`/workflows/${workflow.slug}`}
+            <a href={`/workflows/${workflow.slug}/`}
                class={`block p-5 glass-card glass-card-${meta.color} workflow-card`}
                data-workflow-group={workflow.data.user_group}
                data-color={meta.color}

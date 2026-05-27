@@ -37,20 +37,20 @@ const categories = loadCategories().filter((c) => c.user_group === 'game_devs' |
       </p>
       <div class="flex flex-wrap gap-3">
         {categories.slice(0, 5).map((cat) => (
-          <a href={`/category/${cat.slug}`}
+          <a href={`/category/${cat.slug}/`}
              class="text-sm px-3 py-1.5 rounded-full transition-colors
                     border border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600
                     dark:border-white/15 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-[#4ade80]/50 dark:hover:text-[#4ade80]">
             {cat.name_en}
           </a>
         ))}
-        <a href="/workflows/indie-game-voiceover"
+        <a href="/workflows/indie-game-voiceover/"
            class="text-sm px-3 py-1.5 rounded-full transition-colors
                   bg-green-50 text-green-700 border border-green-200 hover:bg-green-100
                   dark:bg-[#4ade80]/10 dark:text-[#4ade80] dark:border-[#4ade80]/20 dark:hover:bg-[#4ade80]/15">
           📋 Indie Game Voiceover Workflow →
         </a>
-        <a href="/workflows"
+        <a href="/workflows/"
            class="text-sm px-3 py-1.5 rounded-full transition-colors
                   bg-green-50 text-green-700 border border-green-200 hover:bg-green-100
                   dark:bg-[#4ade80]/10 dark:text-[#4ade80] dark:border-[#4ade80]/20 dark:hover:bg-[#4ade80]/15">
@@ -64,7 +64,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'game_devs' |
         <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Game audio workflow guides</h2>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {gameWorkflows.map((workflow) => (
-            <a href={`/workflows/${workflow.slug}`}
+            <a href={`/workflows/${workflow.slug}/`}
                class="block glass-card glass-card-gamedev rounded-xl p-4 workflow-card"
                data-bg-light="linear-gradient(135deg,rgba(34,197,94,0.08) 0%,rgba(34,197,94,0.02) 100%)"
                data-bg-dark="linear-gradient(135deg,rgba(74,222,128,0.10) 0%,rgba(74,222,128,0.03) 100%)">
@@ -92,7 +92,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'game_devs' |
         </ul>
         {tools.length === 0 && (
           <p class="text-center py-12 text-gray-400 dark:text-slate-500">
-            No tools yet. <a href="/submit" class="underline">Submit one →</a>
+            No tools yet. <a href="/submit/" class="underline">Submit one →</a>
           </p>
         )}
       </div>

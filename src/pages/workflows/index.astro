@@ -36,7 +36,7 @@ const recommendationLabels: Record<string, string> = {
         const meta = GROUP_META[wf.data.user_group];
         return (
           <li data-workflow-group={wf.data.user_group}>
-            <a href={`/workflows/${wf.slug}`}
+            <a href={`/workflows/${wf.slug}/`}
                class="flex items-start gap-4 p-5 border border-gray-200 rounded-xl hover:border-gray-400 transition-colors group">
               <div class={`text-2xl shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-${meta.color}-50`}>
                 {meta.emoji}

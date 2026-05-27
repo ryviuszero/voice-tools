@@ -301,7 +301,7 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
     fallbackResults.innerHTML = matches.length
       ? matches.map((t) => {
           const d = display(t);
-          return `<a href="${isZh ? '/zh' : ''}/tools/${t.slug}" class="block py-3 pr-8 hover:bg-gray-50 dark:hover:bg-white/[0.05] rounded-lg">
+          return `<a href="${isZh ? '/zh' : ''}/tools/${t.slug}/" class="block py-3 pr-8 hover:bg-gray-50 dark:hover:bg-white/[0.05] rounded-lg">
             <span class="block text-sm font-medium text-gray-900 dark:text-slate-100">${escapeHtml(d.name)}</span>
             <span class="block text-xs text-gray-500 dark:text-slate-400">${escapeHtml(d.tagline)}</span>
           </a>`;

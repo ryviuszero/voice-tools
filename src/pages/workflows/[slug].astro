@@ -59,7 +59,7 @@ for (const rec of wf.data.tool_recommendations) {
   recommendationCardSlugs.add(rec.tool_slug);
   recommendationCards.push({
     slug: rec.tool_slug,
-    href: `/tools/${rec.tool_slug}`,
+    href: `/tools/${rec.tool_slug}/`,
     name: rec.tool_name,
     logo: tool?.data.logo,
     tagline: rec.summary,
@@ -102,7 +102,7 @@ const GROUP_META: Record<string, {
   creators: {
     label: 'Creators',
     emoji: '🎬',
-    href:  '/for-creators',
+    href:  '/for-creators/',
     pillClass:      'text-orange-600 bg-orange-50 border border-orange-200 dark:text-[#fb923c] dark:bg-[#fb923c]/10 dark:border-[#fb923c]/20',
     tierBadgeClass: 'bg-orange-50 text-orange-700 dark:bg-[#fb923c]/10 dark:text-[#fb923c]',
     ctaBgClass:     'bg-orange-50 dark:bg-[#fb923c]/[0.08] border border-orange-100 dark:border-[#fb923c]/15',
@@ -111,7 +111,7 @@ const GROUP_META: Record<string, {
   game_devs: {
     label: 'Game Devs',
     emoji: '🎮',
-    href:  '/for-game-devs',
+    href:  '/for-game-devs/',
     pillClass:      'text-green-700 bg-green-50 border border-green-200 dark:text-[#4ade80] dark:bg-[#4ade80]/10 dark:border-[#4ade80]/20',
     tierBadgeClass: 'bg-green-50 text-green-700 dark:bg-[#4ade80]/10 dark:text-[#4ade80]',
     ctaBgClass:     'bg-green-50 dark:bg-[#4ade80]/[0.08] border border-green-100 dark:border-[#4ade80]/15',
@@ -120,7 +120,7 @@ const GROUP_META: Record<string, {
   voice_ai_builders: {
     label: 'Voice AI Builders',
     emoji: '🤖',
-    href:  '/for-voice-ai',
+    href:  '/for-voice-ai/',
     pillClass:      'text-indigo-600 bg-indigo-50 border border-indigo-200 dark:text-[#818cf8] dark:bg-[#818cf8]/10 dark:border-[#818cf8]/20',
     tierBadgeClass: 'bg-indigo-50 text-indigo-700 dark:bg-[#818cf8]/10 dark:text-[#818cf8]',
     ctaBgClass:     'bg-indigo-50 dark:bg-[#818cf8]/[0.08] border border-indigo-100 dark:border-[#818cf8]/15',
@@ -197,7 +197,7 @@ const jsonLd = {
         <section id="overview" class="scroll-mt-24">
           <!-- Header breadcrumb -->
           <div class="mb-2">
-            <a href="/workflows" class="text-sm text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300">← All Workflows</a>
+            <a href="/workflows/" class="text-sm text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300">← All Workflows</a>
           </div>
 
           <div class={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full mb-4 ${meta.pillClass}`}>

@@ -13,15 +13,30 @@ export function langFromPath(pathname: string): Language {
 
 export function localizedPath(path: string, lang: Language): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
-  if (lang === DEFAULT_LANG) return normalized;
-  if (normalized === '/') return `/${lang}`;
-  return `/${lang}${normalized}`;
+  const localized = lang === DEFAULT_LANG
+    ? normalized
+    : normalized === '/' ? `/${lang}` : `/${lang}${normalized}`;
+  return withCanonicalTrailingSlash(localized);
 }
 
 export function alternatePath(pathname: string, lang: Language): string {
   const cleanPath = pathname.replace(/\/$/, '') || '/';
   const withoutLang = cleanPath === '/zh' ? '/' : cleanPath.replace(/^\/zh(?=\/)/, '');
   return localizedPath(withoutLang, lang);
+}
+
+export function withCanonicalTrailingSlash(path: string): string {
+  if (!path.startsWith('/') || path === '/') return path;
+
+  const match = /^([^?#]*)([?#].*)?$/.exec(path);
+  if (!match) return path;
+
+  const pathname = match[1];
+  const suffix = match[2] ?? '';
+  const lastSegment = pathname.split('/').filter(Boolean).at(-1) ?? '';
+  if (pathname.endsWith('/') || lastSegment.includes('.')) return path;
+
+  return `${pathname}/${suffix}`;
 }
 
 export const SITE = {
@@ -412,7 +427,8 @@ export function renderLocalizedMarkdown(markdown: string): string {
 
   const safeHref = (value: string) => {
     const href = value.trim().replace(/&amp;/g, '&');
-    if (href.startsWith('/') || href.startsWith('#')) return escapeHtml(href);
+    if (href.startsWith('/')) return escapeHtml(withCanonicalTrailingSlash(href));
+    if (href.startsWith('#')) return escapeHtml(href);
     try {
       const protocol = new URL(href).protocol;
       return ['http:', 'https:', 'mailto:'].includes(protocol) ? escapeHtml(href) : '#';

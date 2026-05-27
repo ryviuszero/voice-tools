@@ -37,14 +37,14 @@ const categories = loadCategories().filter((c) => c.user_group === 'creators' ||
       </p>
       <div class="flex flex-wrap gap-3">
         {categories.slice(0, 5).map((cat) => (
-          <a href={`/category/${cat.slug}`}
+          <a href={`/category/${cat.slug}/`}
              class="text-sm px-3 py-1.5 rounded-full transition-colors
                     border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600
                     dark:border-white/15 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-[#fb923c]/50 dark:hover:text-[#fb923c]">
             {cat.name_en}
           </a>
         ))}
-        <a href="/workflows"
+        <a href="/workflows/"
            class="text-sm px-3 py-1.5 rounded-full transition-colors
                   bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100
                   dark:bg-[#fb923c]/10 dark:text-[#fb923c] dark:border-[#fb923c]/20 dark:hover:bg-[#fb923c]/15">
@@ -58,7 +58,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'creators' ||
         <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Creator workflow guides</h2>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {creatorWorkflows.map((workflow) => (
-            <a href={`/workflows/${workflow.slug}`}
+            <a href={`/workflows/${workflow.slug}/`}
                class="block glass-card glass-card-creator rounded-xl p-4 workflow-card"
                data-bg-light="linear-gradient(135deg,rgba(249,115,22,0.08) 0%,rgba(249,115,22,0.02) 100%)"
                data-bg-dark="linear-gradient(135deg,rgba(251,146,60,0.10) 0%,rgba(251,146,60,0.03) 100%)">
@@ -86,7 +86,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'creators' ||
         </ul>
         {tools.length === 0 && (
           <p class="text-center py-12 text-gray-400 dark:text-slate-500">
-            No tools yet. <a href="/submit" class="underline">Submit one →</a>
+            No tools yet. <a href="/submit/" class="underline">Submit one →</a>
           </p>
         )}
       </div>

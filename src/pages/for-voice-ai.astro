@@ -37,20 +37,20 @@ const categories = loadCategories().filter((c) => c.user_group === 'voice_ai_bui
       </p>
       <div class="flex flex-wrap gap-3">
         {categories.slice(0, 5).map((cat) => (
-          <a href={`/category/${cat.slug}`}
+          <a href={`/category/${cat.slug}/`}
              class="text-sm px-3 py-1.5 rounded-full transition-colors
                     border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600
                     dark:border-white/15 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-[#818cf8]/50 dark:hover:text-[#818cf8]">
             {cat.name_en}
           </a>
         ))}
-        <a href="/workflows/phone-agent-from-zero"
+        <a href="/workflows/phone-agent-from-zero/"
            class="text-sm px-3 py-1.5 rounded-full transition-colors
                   bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100
                   dark:bg-[#818cf8]/10 dark:text-[#818cf8] dark:border-[#818cf8]/20 dark:hover:bg-[#818cf8]/15">
           📋 Phone Agent from Zero →
         </a>
-        <a href="/workflows"
+        <a href="/workflows/"
            class="text-sm px-3 py-1.5 rounded-full transition-colors
                   bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100
                   dark:bg-[#818cf8]/10 dark:text-[#818cf8] dark:border-[#818cf8]/20 dark:hover:bg-[#818cf8]/15">
@@ -64,7 +64,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'voice_ai_bui
         <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Voice AI workflow guides</h2>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {voiceWorkflows.map((workflow) => (
-            <a href={`/workflows/${workflow.slug}`}
+            <a href={`/workflows/${workflow.slug}/`}
                class="block glass-card glass-card-voiceai rounded-xl p-4 workflow-card"
                data-bg-light="linear-gradient(135deg,rgba(99,102,241,0.08) 0%,rgba(99,102,241,0.02) 100%)"
                data-bg-dark="linear-gradient(135deg,rgba(129,140,248,0.10) 0%,rgba(129,140,248,0.03) 100%)">
@@ -92,7 +92,7 @@ const categories = loadCategories().filter((c) => c.user_group === 'voice_ai_bui
         </ul>
         {tools.length === 0 && (
           <p class="text-center py-12 text-gray-400 dark:text-slate-500">
-            No tools yet. <a href="/submit" class="underline">Submit one →</a>
+            No tools yet. <a href="/submit/" class="underline">Submit one →</a>
           </p>
         )}
       </div>

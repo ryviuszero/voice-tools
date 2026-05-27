@@ -22,9 +22,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div id="compare-empty" class="hidden text-center py-20 space-y-4">
       <p class="text-gray-400">No tools selected. Browse tools and click "+ Compare" to add them here.</p>
       <div class="flex gap-3 justify-center">
-        <a href="/for-creators" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎬 Creators</a>
-        <a href="/for-game-devs" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎮 Game Devs</a>
-        <a href="/for-voice-ai" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🤖 Voice AI</a>
+        <a href="/for-creators/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎬 Creators</a>
+        <a href="/for-game-devs/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🎮 Game Devs</a>
+        <a href="/for-voice-ai/" class="text-sm px-4 py-2 border border-gray-200 rounded-lg hover:border-gray-400">🤖 Voice AI</a>
       </div>
     </div>
 
@@ -107,7 +107,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     const cols = tools.map((t) => `
       <th class="px-4 py-3 text-left font-semibold min-w-40">
-        <a href="/tools/${escapeAttr(encodeURIComponent(t.slug))}" class="hover:underline">
+        <a href="/tools/${escapeAttr(encodeURIComponent(t.slug))}/" class="hover:underline">
           ${escapeHtml(t.name)}
         </a>
       </th>

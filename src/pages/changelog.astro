@@ -51,7 +51,7 @@ for (const entry of changelog) {
               <time class="text-xs text-gray-400 pt-0.5">{entry.date.slice(5)}</time>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1">
-                  <a href={`/tools/${entry.tool_slug}`}
+                  <a href={`/tools/${entry.tool_slug}/`}
                      class="text-sm font-medium hover:underline">
                     {toolNames.get(entry.tool_slug) ?? entry.tool_slug}
                   </a>

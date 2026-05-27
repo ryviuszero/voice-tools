@@ -1,4 +1,5 @@
 import './i18n.test.ts';
+import './canonical-request.test.ts';
 import './data-loader.test.ts';
 import './content-integrity.test.ts';
 import './update-tool-data.test.ts';
