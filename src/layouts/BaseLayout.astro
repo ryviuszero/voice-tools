@@ -460,8 +460,8 @@ const ui = t(lang);
     }
 
     #compare-bar,
-    #search-modal > div > div,
-    html.dark #search-modal > div > div {
+    #search-panel,
+    html.dark #search-panel {
       background: var(--taaft-bg-card) !important;
       border: 2px solid var(--taaft-border-strong) !important;
       border-radius: 0 !important;
@@ -473,6 +473,28 @@ const ui = t(lang);
     #search-modal {
       background: rgba(0, 0, 0, 0.78) !important;
       backdrop-filter: none !important;
+    }
+
+    #search-modal > div {
+      max-width: min(42rem, calc(100vw - 2rem)) !important;
+    }
+
+    #search-panel {
+      min-height: 360px;
+    }
+
+    #fallback-search-input,
+    .open-search-input {
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+    }
+
+    #fallback-search-input {
+      color: var(--taaft-text-primary) !important;
+      min-height: 24px;
+      padding: 0 !important;
     }
 
     .text-gradient-hero,

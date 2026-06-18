@@ -154,12 +154,11 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
   }
 </style>
 
-<!-- Pagefind search modal -->
+<!-- Search modal -->
 <div id="search-modal" class="hidden fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm dark:bg-black/60 dark:backdrop-blur-md" role="dialog" aria-modal="true">
-  <div class="max-w-xl mx-auto mt-20 px-4">
-    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden relative dark:bg-[#0f1324]">
-      <div id="pagefind-search-container" class="p-4 pr-12"></div>
-      <div id="pagefind-fallback" class="hidden p-4 space-y-3">
+  <div class="w-full max-w-2xl mx-auto px-4 pt-16 sm:pt-24">
+    <div id="search-panel" class="bg-white rounded-2xl shadow-2xl overflow-hidden relative dark:bg-[#0f1324]">
+      <div id="pagefind-fallback" class="p-4 space-y-3">
         <label class="mr-8 flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 focus-within:border-indigo-400
                       dark:border-white/15 dark:bg-white/[0.04] dark:focus-within:border-[#818cf8]">
           <svg class="w-4 h-4 shrink-0 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,9 +175,9 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
             autocomplete="off"
           />
         </label>
-        <div id="fallback-search-results" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.08]"></div>
+        <div id="fallback-search-results" class="min-h-64 max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.08]"></div>
         <p class="text-xs text-gray-400 dark:text-slate-500">
-          {lang === 'zh' ? '当前环境没有静态搜索索引，结果会从工具 JSON 中匹配。' : 'Static search index is not available in this environment, so results are matched from the tools JSON.'}
+          {lang === 'zh' ? '搜索工具名称、分类和一句话说明。' : 'Search tool names, categories, and short descriptions.'}
         </p>
       </div>
       <button id="search-close"
@@ -240,7 +239,6 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
   // ── Search modal ──────────────────────────────────────────
   const modal    = document.getElementById('search-modal')!;
   const closeBtn = document.getElementById('search-close')!;
-  const pagefindContainer = document.getElementById('pagefind-search-container')!;
   const fallback      = document.getElementById('pagefind-fallback')!;
   const fallbackInput = document.getElementById('fallback-search-input') as HTMLInputElement;
   const fallbackResults = document.getElementById('fallback-search-results')!;
@@ -250,21 +248,9 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
     i18n?: { zh?: { name?: string; tagline?: string } };
   };
 
-  const runtimeImport = new Function('url', 'return import(url)') as (url: string) => Promise<any>;
-  let uiLoaded = false;
-  let cssLoaded = false;
   let fallbackTools: ToolSearchRecord[] | null = null;
 
   function closeSearch() { modal.classList.add('hidden'); }
-
-  function syncPagefindTerm(term: string) {
-    const input = document.querySelector('#pagefind-search-container input') as HTMLInputElement | null;
-    if (!input) return;
-    input.focus();
-    if (!term || input.value === term) return;
-    input.value = term;
-    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: term }));
-  }
 
   async function loadFallbackTools() {
     if (fallbackTools) return fallbackTools;
@@ -280,7 +266,6 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
   }
 
   async function renderFallback(term = '') {
-    pagefindContainer.classList.add('hidden');
     fallback.classList.remove('hidden');
     fallbackInput.value = term;
     fallbackInput.focus();
@@ -309,30 +294,10 @@ const languageHref = alternatePath(pathname, lang === 'en' ? 'zh' : 'en');
       : `<p class="py-6 text-center text-sm text-gray-500 dark:text-slate-500">${isZh ? '没有找到匹配工具。' : 'No matching tools found.'}</p>`;
   }
 
-  function loadPagefindStyles() {
-    if (cssLoaded || document.querySelector('link[data-pagefind-ui]')) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet'; link.href = '/pagefind/pagefind-ui.css';
-    link.dataset.pagefindUi = 'true';
-    document.head.append(link);
-    cssLoaded = true;
-  }
-
   async function openSearch(term = '') {
     modal.classList.remove('hidden');
-    pagefindContainer.classList.remove('hidden');
-    if (!uiLoaded) {
-      try {
-        const mod = await runtimeImport('/pagefind/pagefind-ui.js');
-        if (mod?.PagefindUI) {
-          loadPagefindStyles();
-          new mod.PagefindUI({ element: '#pagefind-search-container', showSubResults: false });
-          uiLoaded = true;
-        }
-      } catch { await renderFallback(term); return; }
-    }
-    fallback.classList.add('hidden');
-    requestAnimationFrame(() => syncPagefindTerm(term));
+    document.querySelectorAll<HTMLInputElement>('.open-search-input').forEach((input) => input.blur());
+    await renderFallback(term);
   }
 
   document.querySelectorAll('#search-trigger, .open-search').forEach((el) => {
