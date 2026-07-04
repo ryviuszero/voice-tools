@@ -75,7 +75,6 @@ export type TTSSynthesizeResponse = {
   content_type: string;
   voice_ids: string[];
   characters: number;
-  estimated_cost_usd?: string;
   cached: boolean;
   expires_at?: string;
 };

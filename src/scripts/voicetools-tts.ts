@@ -31,16 +31,11 @@ type TtsState = {
   segments: SegmentState[];
   maxChars: number | null;
   maxSegments: number | null;
-  dailyCharLimit: number | null;
-  dailyCharsUsed: number;
-  dailyQuotaFromBackend: boolean;
   loading: boolean;
   providerAvailable: boolean;
   serviceMessage: string;
 };
 
-const FALLBACK_DAILY_CHAR_LIMIT = 10000;
-const DAILY_USAGE_KEY = 'vtd_tts_daily_usage';
 const isZh = document.documentElement.lang.startsWith('zh');
 const copy = isZh ? {
   noLanguages: '未加载到语言',
@@ -56,10 +51,8 @@ const copy = isZh ? {
   pitchLocked: 'Neural voice 暂不支持调整音调。',
   max: '最多',
   loading: '加载中',
-  backendEnforced: '后端限制',
+  backendEnforced: '后端强制限制',
   chars: '字符',
-  charsLeft: '字符剩余',
-  estimated: '估算',
   generating: '生成中...',
   generate: '生成语音',
   connecting: '正在连接 API',
@@ -108,10 +101,8 @@ const copy = isZh ? {
   pitchLocked: 'Pitch is locked for neural voices.',
   max: 'Max',
   loading: 'Loading',
-  backendEnforced: 'Backend enforced',
+  backendEnforced: 'Server enforced',
   chars: 'chars',
-  charsLeft: 'chars left',
-  estimated: 'est.',
   generating: 'Generating...',
   generate: 'Generate Speech',
   connecting: 'Connecting to API',
@@ -132,6 +123,8 @@ const copy = isZh ? {
   errorReasons: {} as Record<string, string>,
 };
 
+const DAILY_FREE_QUOTA_CHARS = 10000;
+
 const state: TtsState = {
   provider: null,
   languages: [],
@@ -144,9 +137,6 @@ const state: TtsState = {
   segments: [createSegment()],
   maxChars: null,
   maxSegments: null,
-  dailyCharLimit: FALLBACK_DAILY_CHAR_LIMIT,
-  dailyCharsUsed: 0,
-  dailyQuotaFromBackend: false,
   loading: false,
   providerAvailable: false,
   serviceMessage: '',
@@ -201,27 +191,6 @@ function createSegment(): SegmentState {
   };
 }
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function loadLocalDailyUsage() {
-  try {
-    const value = JSON.parse(localStorage.getItem(DAILY_USAGE_KEY) || '{}') as { date?: string; chars?: number };
-    state.dailyCharsUsed = value.date === todayKey() ? Math.max(0, Number(value.chars) || 0) : 0;
-  } catch {
-    state.dailyCharsUsed = 0;
-  }
-}
-
-function saveLocalDailyUsage() {
-  try {
-    localStorage.setItem(DAILY_USAGE_KEY, JSON.stringify({ date: todayKey(), chars: state.dailyCharsUsed }));
-  } catch {
-    // Local quota persistence is best-effort; generation should still succeed without storage.
-  }
-}
-
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 }
@@ -273,40 +242,9 @@ function knownMaxSegments() {
   return state.maxSegments ?? 1;
 }
 
-function remainingDailyChars() {
-  if (!state.dailyCharLimit) return null;
-  return Math.max(0, state.dailyCharLimit - state.dailyCharsUsed);
-}
-
-function formatChars(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
 function applyProviderLimits(provider: TTSProvider | null) {
   state.maxChars = provider?.limits?.max_chars_per_request ?? null;
   state.maxSegments = provider?.limits?.max_segments_per_request ?? null;
-
-  const dynamicLimits = provider?.limits as TTSProvider['limits'] & Record<string, unknown> | undefined;
-  const backendDailyLimit = Number(
-    dynamicLimits?.daily_free_chars ??
-    dynamicLimits?.ip_daily_char_limit ??
-    dynamicLimits?.daily_char_limit ??
-    0
-  );
-  const backendRemaining = Number(
-    dynamicLimits?.daily_chars_remaining ??
-    dynamicLimits?.ip_daily_chars_remaining ??
-    dynamicLimits?.remaining_daily_chars ??
-    -1
-  );
-
-  state.dailyQuotaFromBackend = Number.isFinite(backendRemaining) && backendRemaining >= 0;
-  if (Number.isFinite(backendDailyLimit) && backendDailyLimit > 0) {
-    state.dailyCharLimit = backendDailyLimit;
-  }
-  if (state.dailyQuotaFromBackend && state.dailyCharLimit) {
-    state.dailyCharsUsed = Math.max(0, state.dailyCharLimit - backendRemaining);
-  }
 }
 
 function setProviderStatus(kind: 'loading' | 'available' | 'unavailable' | 'error', text: string) {
@@ -409,21 +347,16 @@ function renderSelects() {
 function renderState() {
   const chars = totalCharacters();
   const overLimit = Number.isFinite(knownMaxChars()) && chars > knownMaxChars();
-  const dailyRemaining = remainingDailyChars();
-  const overDailyQuota = dailyRemaining !== null && chars > dailyRemaining;
   const canGenerate = state.providerAvailable
     && currentNonEmptySegments().length > 0
     && !overLimit
-    && !overDailyQuota
     && Boolean(state.selectedVoiceId)
     && !state.loading;
 
   selectors.totalChars.textContent = String(chars);
   selectors.maxChars.textContent = state.maxChars ? String(state.maxChars) : '--';
   selectors.limitChars.textContent = state.maxChars ? `${state.maxChars} ${copy.chars}` : copy.loading;
-  selectors.dailyQuota.textContent = dailyRemaining === null
-    ? copy.backendEnforced
-    : `${formatChars(dailyRemaining)} / ${formatChars(state.dailyCharLimit || dailyRemaining)} ${copy.charsLeft}${state.dailyQuotaFromBackend ? '' : ` ${copy.estimated}`}`;
+  selectors.dailyQuota.textContent = `${DAILY_FREE_QUOTA_CHARS.toLocaleString()} ${copy.chars}`;
   selectors.totalChars.parentElement?.classList.toggle('over-limit', overLimit);
   selectors.segmentLimit.textContent = state.maxSegments ? `${copy.max} ${state.maxSegments}` : `${copy.max} --`;
   selectors.addSegment.disabled = state.loading || !state.maxSegments || state.segments.length >= knownMaxSegments();
@@ -608,15 +541,6 @@ selectors.generate.addEventListener('click', async () => {
     selectors.resultVoice.textContent = voiceLabel(selectedVoice());
     selectors.resultCharacters.textContent = String(result.characters);
     selectors.resultCached.textContent = result.cached ? copy.yes : copy.no;
-    if (!state.dailyQuotaFromBackend && !result.cached) {
-      state.dailyCharsUsed += result.characters;
-      saveLocalDailyUsage();
-    }
-    if (state.dailyQuotaFromBackend) {
-      const providersData = await fetchTtsProviders();
-      state.provider = providersData.providers.find((provider) => provider.id === state.selectedProvider) ?? state.provider;
-      applyProviderLimits(state.provider);
-    }
     setResultState(result.status === 'ready' ? 'ready' : 'generating');
   } catch (error) {
     if (error instanceof VoiceToolsApiError) {
@@ -630,6 +554,5 @@ selectors.generate.addEventListener('click', async () => {
   }
 });
 
-loadLocalDailyUsage();
 rerender();
 loadInitialData();
