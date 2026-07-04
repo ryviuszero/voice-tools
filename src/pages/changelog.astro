@@ -17,11 +17,11 @@ const CHANGE_TYPE_LABEL: Record<string, string> = {
 };
 
 const CHANGE_TYPE_CLASS: Record<string, string> = {
-  pricing_change:  'bg-yellow-100 text-yellow-700',
-  feature_added:   'bg-green-100 text-green-700',
-  product_change:  'bg-blue-100 text-blue-700',
-  model_release:   'bg-purple-100 text-purple-700',
-  policy_change:   'bg-red-100 text-red-700',
+  pricing_change:  'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300',
+  feature_added:   'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  product_change:  'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+  model_release:   'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+  policy_change:   'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
 };
 
 // Group by month
@@ -45,24 +45,24 @@ for (const entry of changelog) {
         <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
           {new Date(month + '-01').toLocaleDateString('en', { month: 'long', year: 'numeric' })}
         </h2>
-        <ul class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+        <ul class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden dark:divide-white/[0.08] dark:border-white/[0.10]">
           {entries.map((entry) => (
-            <li class="px-5 py-4 grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 bg-white hover:bg-gray-50 transition-colors">
-              <time class="text-xs text-gray-400 pt-0.5">{entry.date.slice(5)}</time>
+            <li class="px-5 py-4 grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 bg-white hover:bg-gray-50 transition-colors dark:bg-[#141210] dark:hover:bg-[#1a1714]">
+              <time class="text-xs text-gray-400 pt-0.5 dark:text-slate-500">{entry.date.slice(5)}</time>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1">
                   <a href={`/tools/${entry.tool_slug}/`}
-                     class="text-sm font-medium hover:underline">
+                     class="text-sm font-medium text-gray-900 hover:underline dark:text-slate-100">
                     {toolNames.get(entry.tool_slug) ?? entry.tool_slug}
                   </a>
-                  <span class={`text-xs px-1.5 py-0.5 rounded ${CHANGE_TYPE_CLASS[entry.change_type] ?? 'bg-gray-100 text-gray-500'}`}>
+                  <span class={`text-xs px-1.5 py-0.5 rounded ${CHANGE_TYPE_CLASS[entry.change_type] ?? 'bg-gray-100 text-gray-500 dark:bg-white/[0.08] dark:text-slate-400'}`}>
                     {CHANGE_TYPE_LABEL[entry.change_type] ?? entry.change_type}
                   </span>
                 </div>
-                <p class="text-sm text-gray-600">{changelogDescription(entry, 'en')}</p>
+                <p class="text-sm text-gray-600 dark:text-slate-300">{changelogDescription(entry, 'en')}</p>
                 {entry.source_url && (
                   <a href={entry.source_url} target="_blank" rel="noopener noreferrer"
-                     class="text-xs text-blue-500 hover:underline mt-0.5 inline-block">
+                     class="text-xs text-blue-500 hover:underline mt-0.5 inline-block dark:text-[#FF6B00]">
                     Source →
                   </a>
                 )}

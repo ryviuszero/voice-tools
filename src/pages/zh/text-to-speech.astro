@@ -1,0 +1,15 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import VoiceToolsTtsTool from '../../components/VoiceToolsTtsTool.astro';
+import '../../styles/voicetools-tts.css';
+
+const lang = 'zh';
+const pageDescription = '使用 Amazon Polly 声音将文字生成 MP3 语音，可选择语言和声音，生成后播放并下载音频。';
+---
+
+<BaseLayout title="免费文字转语音" description={pageDescription} lang={lang}>
+  <VoiceToolsTtsTool lang={lang} />
+  <SiteFooter lang={lang} />
+</BaseLayout>

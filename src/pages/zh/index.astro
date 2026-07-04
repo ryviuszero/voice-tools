@@ -1,6 +1,8 @@
 ---
 export const prerender = true;
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HomeTtsCard from '../../components/HomeTtsCard.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
 import ToolCard from '../../components/ToolCard.astro';
 import ToolLogo from '../../components/ToolLogo.astro';
 import { getCollection } from 'astro:content';
@@ -188,7 +190,14 @@ const WORKFLOW_BG_DARK: Record<string, string> = {
         })}
       </div>
     </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-6">语音工具</h2>
+      <HomeTtsCard lang={lang} />
+    </section>
   </main>
+
+  <SiteFooter lang={lang} />
 </BaseLayout>
 
 <style is:global>

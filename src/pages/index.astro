@@ -1,13 +1,14 @@
 ---
 export const prerender = true;
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HomeTtsCard from '../components/HomeTtsCard.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import ToolCard from '../components/ToolCard.astro';
 import ToolLogo from '../components/ToolLogo.astro';
 import { getCollection } from 'astro:content';
 import { changelogDescription, loadCategories, recentChangelog } from '../lib/data-loader';
 import { recentTools, BADGE_CLASS, formatToolBadge, visibleToolBadges } from '../lib/tool-helpers';
 import { localizedToolData } from '../lib/i18n';
-import { GITHUB_BASE_URL } from '../lib/site-config';
 
 const allTools       = await getCollection('tools');
 const categories     = loadCategories();
@@ -18,14 +19,6 @@ const newTools           = recentTools(allTools, 5);
 const featuredWorkflows  = (await getCollection('workflows'))
   .filter((workflow) => workflow.data.featured)
   .sort((a, b) => Number(a.data.user_group !== 'creators') - Number(b.data.user_group !== 'creators'));
-const footerLinks = [
-  GITHUB_BASE_URL && { href: GITHUB_BASE_URL, label: 'GitHub' },
-  { href: '/llms.txt', label: 'llms.txt' },
-  { href: '/about/', label: 'About' },
-  { href: '/submit/', label: 'Submit a Tool' },
-  { href: '/workflows/', label: 'Workflows' },
-].filter(Boolean) as Array<{ href: string; label: string }>;
-
 const toolNameBySlug = new Map(allTools.map((t) => [t.slug, t.data.name]));
 const WORKFLOW_GROUP_META: Record<string, { emoji: string; color: string }> = {
   creators:          { emoji: '🎬', color: 'creator' },
@@ -311,18 +304,17 @@ const jsonLd = {
       </div>
     </section>
 
+    <!-- Voice Tools -->
+    <section>
+      <h2 class="taaft-section-heading text-2xl font-black">
+        <span class="taaft-section-kicker">06 / VOICE TOOLS</span>
+      </h2>
+      <HomeTtsCard />
+    </section>
+
   </main>
 
-  <footer class="border-t mt-16 py-8 text-center text-sm space-x-4
-                 border-gray-200 text-gray-400
-                 dark:border-white/[0.08] dark:text-slate-500">
-    {footerLinks.map((link, index) => (
-      <>
-        {index > 0 && <span>·</span>}
-        <a href={link.href} class="hover:text-gray-700 dark:hover:text-slate-200 transition-colors">{link.label}</a>
-      </>
-    ))}
-  </footer>
+  <SiteFooter />
 </BaseLayout>
 
 <style is:global>
@@ -331,6 +323,7 @@ const jsonLd = {
   html[data-nav-group-value='voice_ai_builders'] [data-home-workflows] [data-workflow-group]:not([data-workflow-group='voice_ai_builders']) {
     display: none;
   }
+
 </style>
 
 <script>

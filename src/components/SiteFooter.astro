@@ -1,0 +1,247 @@
+---
+import { GITHUB_BASE_URL } from '../lib/site-config';
+import { localizedPath, type Language } from '../lib/i18n';
+
+type Props = {
+  lang?: Language;
+};
+
+const { lang = 'en' } = Astro.props;
+const isZh = lang === 'zh';
+const currentYear = new Date().getFullYear();
+const href = (path: string) => localizedPath(path, lang);
+const footerGroups = isZh
+  ? [
+      {
+        title: '工具',
+        links: [{ href: href('/text-to-speech'), label: '免费文字转语音' }],
+      },
+      {
+        title: '资源',
+        links: [
+          { href: href('/workflows'), label: '工作流指南' },
+          { href: '/llms.txt', label: 'llms.txt' },
+        ],
+      },
+      {
+        title: '站点',
+        links: [
+          { href: href('/about'), label: '关于' },
+          { href: href('/submit'), label: '提交工具' },
+        ],
+      },
+      {
+        title: '法律',
+        links: [
+          { href: href('/about'), label: '条款' },
+          { href: href('/about'), label: '隐私' },
+        ],
+      },
+    ]
+  : [
+      {
+        title: 'Tools',
+        links: [{ href: href('/text-to-speech'), label: 'Free Text to Speech' }],
+      },
+      {
+        title: 'Resources',
+        links: [
+          { href: href('/workflows'), label: 'Workflow Guides' },
+          { href: '/llms.txt', label: 'llms.txt' },
+        ],
+      },
+      {
+        title: 'Company',
+        links: [
+          { href: href('/about'), label: 'About' },
+          { href: href('/submit'), label: 'Submit a Tool' },
+        ],
+      },
+      {
+        title: 'Legal',
+        links: [
+          { href: href('/about'), label: 'Terms' },
+          { href: href('/about'), label: 'Privacy' },
+        ],
+      },
+    ];
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <a href={href('/')} class="site-footer__logo" aria-label={isZh ? '语音工具首页' : 'Voice Tools home'}>
+          <span class="site-footer__mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </span>
+          <span>{isZh ? '语音工具' : 'Voice Tools'}</span>
+        </a>
+        <p>{isZh ? '语音工具目录。' : 'Voice tools directory.'}<br />{isZh ? '发现和对比音频工具。' : 'Find and compare audio tools.'}</p>
+      </div>
+
+      <nav class="site-footer__nav" aria-label={isZh ? '页脚导航' : 'Footer navigation'}>
+        {footerGroups.map((group) => (
+          <div class="site-footer__group">
+            <h2>{group.title}</h2>
+            <ul>
+              {group.links.map((link) => (
+                <li><a href={link.href}>{link.label}</a></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>© {currentYear} Voice Tools Directory. {isZh ? '保留所有权利。' : 'All rights reserved.'}</p>
+      <div class="site-footer__links">
+        {GITHUB_BASE_URL && (
+          <a href={GITHUB_BASE_URL} aria-label={isZh ? 'GitHub 仓库' : 'GitHub repository'}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 2C6.48 2 2 6.58 2 12.25c0 4.52 2.87 8.35 6.84 9.71.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.93.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.35 9.35 0 0 1 12 6.99c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.08 10.08 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"
+              />
+            </svg>
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 2px solid var(--taaft-border);
+    margin-top: 64px;
+    color: var(--taaft-text-secondary);
+  }
+
+  .site-footer__inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 34px 16px 28px;
+  }
+
+  .site-footer__top,
+  .site-footer__bottom,
+  .site-footer__logo,
+  .site-footer__links,
+  .site-footer__mark {
+    display: flex;
+  }
+
+  .site-footer__top {
+    justify-content: space-between;
+    gap: 40px;
+    padding-bottom: 34px;
+    border-bottom: 2px solid var(--taaft-border);
+  }
+
+  .site-footer__brand {
+    min-width: 220px;
+  }
+
+  .site-footer__logo {
+    align-items: center;
+    gap: 12px;
+    color: var(--taaft-text-primary);
+    font: 900 18px "Space Grotesk", "Arial Black", sans-serif;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .site-footer__mark {
+    align-items: center;
+    gap: 3px;
+    color: var(--taaft-brand);
+  }
+
+  .site-footer__mark span {
+    width: 3px;
+    background: currentColor;
+  }
+
+  .site-footer__mark span:nth-child(1),
+  .site-footer__mark span:nth-child(5) { height: 14px; }
+  .site-footer__mark span:nth-child(2),
+  .site-footer__mark span:nth-child(4) { height: 24px; }
+  .site-footer__mark span:nth-child(3) { height: 34px; }
+
+  .site-footer__brand p,
+  .site-footer__group a,
+  .site-footer__bottom {
+    font: 14px/1.7 "IBM Plex Mono", Consolas, ui-monospace;
+  }
+
+  .site-footer__brand p {
+    margin: 16px 0 0;
+  }
+
+  .site-footer__nav {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  .site-footer__group h2 {
+    margin: 0 0 12px;
+    color: var(--taaft-text-primary);
+    font: 800 13px "IBM Plex Mono", Consolas, ui-monospace;
+    text-transform: uppercase;
+  }
+
+  .site-footer__group ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-footer__group a,
+  .site-footer__links a {
+    color: var(--taaft-text-secondary);
+    text-decoration: none;
+  }
+
+  .site-footer__group a:hover,
+  .site-footer__links a:hover {
+    color: var(--taaft-brand);
+  }
+
+  .site-footer__bottom {
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 26px;
+  }
+
+  .site-footer__bottom p {
+    margin: 0;
+  }
+
+  .site-footer__links {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .site-footer__links svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  @media (max-width: 760px) {
+    .site-footer__top,
+    .site-footer__bottom {
+      display: grid;
+    }
+
+    .site-footer__nav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

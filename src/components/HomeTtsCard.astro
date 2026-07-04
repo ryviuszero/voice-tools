@@ -1,0 +1,169 @@
+---
+import { localizedPath, type Language } from '../lib/i18n';
+
+type Props = {
+  lang?: Language;
+};
+
+const { lang = 'en' } = Astro.props;
+const isZh = lang === 'zh';
+const href = localizedPath('/text-to-speech', lang);
+---
+
+<a href={href} class="home-tts-card" aria-label={isZh ? '打开免费文字转语音工具' : 'Open Free Text to Speech'}>
+  <span class="home-tts-rail" aria-hidden="true"></span>
+  <span class="home-tts-mark" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </span>
+  <span class="home-tts-title">{isZh ? '免费文字转语音' : 'Free Text to Speech'}</span>
+  <span class="home-tts-provider">
+    <strong>Amazon Polly</strong>
+    <span class="home-tts-dot" aria-hidden="true"></span>
+    <span>{isZh ? 'API 已连接' : 'API connected'}</span>
+  </span>
+  <span class="home-tts-meta">{isZh ? 'MP3 输出 / 1200 字符' : 'MP3 output / 1200 chars'}</span>
+  <span class="home-tts-cta">
+    {isZh ? '打开工具' : 'Open Tool'}
+    <span aria-hidden="true">→</span>
+  </span>
+</a>
+
+<style>
+  .home-tts-card {
+    position: relative;
+    display: grid;
+    width: min(680px, 100%);
+    gap: 18px;
+    overflow: hidden;
+    border: 2px solid var(--taaft-border-visible);
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 107, 0, 0.035) 1px, transparent 1px),
+      var(--taaft-bg-card);
+    background-size: 18px 18px;
+    color: var(--taaft-text-primary);
+    padding: 34px 34px 34px 52px;
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .home-tts-card:hover {
+    border-color: var(--taaft-brand);
+    box-shadow: var(--taaft-shadow-brand);
+  }
+
+  .home-tts-card:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--taaft-brand);
+  }
+
+  .home-tts-rail {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 10px;
+    background: var(--taaft-brand);
+  }
+
+  .home-tts-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 44px;
+    color: var(--taaft-brand);
+  }
+
+  .home-tts-mark span {
+    display: block;
+    width: 4px;
+    background: currentColor;
+  }
+
+  .home-tts-mark span:nth-child(1),
+  .home-tts-mark span:nth-child(5) {
+    height: 18px;
+  }
+
+  .home-tts-mark span:nth-child(2),
+  .home-tts-mark span:nth-child(4) {
+    height: 30px;
+  }
+
+  .home-tts-mark span:nth-child(3) {
+    height: 42px;
+  }
+
+  .home-tts-title {
+    color: var(--taaft-text-primary);
+    font-family: "Space Grotesk", "Arial Black", Impact, sans-serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .home-tts-provider,
+  .home-tts-meta,
+  .home-tts-cta {
+    font-family: "IBM Plex Mono", Consolas, ui-monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .home-tts-provider {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: #7ed957;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+
+  .home-tts-provider strong {
+    color: var(--taaft-brand);
+    font-weight: 800;
+  }
+
+  .home-tts-dot {
+    width: 10px;
+    height: 10px;
+    background: #7ed957;
+    box-shadow: 0 0 0 2px #000;
+  }
+
+  .home-tts-meta {
+    width: 100%;
+    border-bottom: 2px solid var(--taaft-border-visible);
+    color: var(--taaft-text-secondary);
+    font-size: 14px;
+    padding-bottom: 18px;
+  }
+
+  .home-tts-cta {
+    display: inline-flex;
+    width: fit-content;
+    min-width: 300px;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border: 2px solid #000;
+    background: var(--taaft-brand);
+    color: var(--taaft-brand-text);
+    box-shadow: var(--taaft-shadow-hard);
+    font-size: 16px;
+    font-weight: 900;
+    padding: 16px 24px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    .home-tts-card {
+      padding: 24px 18px 24px 32px;
+    }
+
+    .home-tts-cta {
+      min-width: 0;
+      width: 100%;
+    }
+  }
+</style>

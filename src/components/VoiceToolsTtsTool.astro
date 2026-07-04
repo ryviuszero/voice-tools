@@ -1,0 +1,240 @@
+---
+import type { Language } from '../lib/i18n';
+
+type Props = {
+  lang?: Language;
+};
+
+const { lang = 'en' } = Astro.props;
+const isZh = lang === 'zh';
+const copy = isZh ? {
+  eyebrow: 'Voice Tools',
+  title: '免费文字转语音',
+  editor: '编辑器',
+  textSegments: '文本片段',
+  chars: '字符',
+  language: '语言',
+  loadingLanguages: '正在加载语言...',
+  voice: '声音',
+  loadingVoices: '正在加载声音...',
+  generate: '生成语音',
+  addSegment: '+ 添加片段',
+  clearText: '清空文本',
+  settings: '设置',
+  provider: 'Provider',
+  engine: 'Engine',
+  output: 'Output',
+  serviceNote: '正在通过 Voice Tools API 连接 Amazon Polly。',
+  result: '结果',
+  audioOutput: '音频输出',
+  idle: '待生成',
+  empty: '输入文本并生成语音后，可在这里预览音频。',
+  loading: '正在生成音频...',
+  download: '下载 MP3',
+  characters: '字符数',
+  cached: '缓存',
+  failed: '生成失败',
+  tryAgain: '稍后再试。',
+  limits: '限制',
+  singleRequest: '单次请求',
+  dailyQuota: '每日免费额度',
+  inputStorage: '输入存储',
+  notSaved: '此页面不保存',
+  currentProvider: '当前 Provider',
+  amazonOnly: '仅 Amazon Polly',
+} : {
+  eyebrow: 'Voice Tools',
+  title: 'Free Text to Speech',
+  editor: 'Editor',
+  textSegments: 'Text segments',
+  chars: 'chars',
+  language: 'Language',
+  loadingLanguages: 'Loading languages...',
+  voice: 'Voice',
+  loadingVoices: 'Loading voices...',
+  generate: 'Generate Speech',
+  addSegment: '+ Add segment',
+  clearText: 'Clear text',
+  settings: 'Settings',
+  provider: 'Provider',
+  engine: 'Engine',
+  output: 'Output',
+  serviceNote: 'Connecting to Amazon Polly through the Voice Tools API.',
+  result: 'Result',
+  audioOutput: 'Audio output',
+  idle: 'Idle',
+  empty: 'Enter text and generate speech to preview audio here.',
+  loading: 'Generating audio...',
+  download: 'Download MP3',
+  characters: 'Characters',
+  cached: 'Cached',
+  failed: 'Generation failed',
+  tryAgain: 'Try again later.',
+  limits: 'Limits',
+  singleRequest: 'Single request',
+  dailyQuota: 'Daily free quota',
+  inputStorage: 'Input storage',
+  notSaved: 'Not saved by this page',
+  currentProvider: 'Current provider',
+  amazonOnly: 'Amazon Polly only',
+};
+---
+
+<main class="mx-auto max-w-6xl px-4 py-8 sm:py-10" data-pagefind-ignore data-tts-lang={lang}>
+  <section class="tts-tool">
+    <div class="tts-tool__header">
+      <div>
+        <p class="taaft-section-kicker">{copy.eyebrow}</p>
+        <h1>{copy.title}</h1>
+      </div>
+    </div>
+
+    <div class="tts-tool__workspace">
+      <section class="tts-panel tts-editor" aria-labelledby="tts-editor-heading">
+        <div class="tts-section-head">
+          <div>
+            <p class="tts-kicker">{copy.editor}</p>
+            <h2 id="tts-editor-heading">{copy.textSegments}</h2>
+          </div>
+          <div class="tts-counter">
+            <span data-total-chars>0</span>
+            <span>/</span>
+            <span data-max-chars>--</span>
+            <span>{copy.chars}</span>
+          </div>
+        </div>
+
+        <div class="tts-primary-controls" aria-label="Speech voice controls">
+          <div class="tts-selector-pair">
+            <label>
+              <span>{copy.language}</span>
+              <select data-language-select disabled>
+                <option value="">{copy.loadingLanguages}</option>
+              </select>
+            </label>
+            <label>
+              <span>{copy.voice}</span>
+              <select data-voice-select disabled>
+                <option value="">{copy.loadingVoices}</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" class="taaft-primary tts-generate" data-generate disabled>
+            <span data-generate-label>{copy.generate}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div class="tts-segment-list" data-segment-list></div>
+
+        <div class="tts-segment-actions">
+          <button type="button" class="taaft-secondary tts-secondary" data-add-segment disabled>{copy.addSegment}</button>
+          <button type="button" class="tts-link-button" data-clear-segments>{copy.clearText}</button>
+          <span data-segment-limit>Max --</span>
+        </div>
+
+        <details class="tts-advanced">
+          <summary>
+            <span>{copy.settings}</span>
+            <span data-settings-summary>Amazon Polly · Neural · MP3</span>
+          </summary>
+          <div class="tts-settings-grid">
+            <label>
+              <span>{copy.provider}</span>
+              <select data-provider-select disabled>
+                <option value="amazon_polly">Amazon Polly</option>
+              </select>
+            </label>
+            <label>
+              <span>{copy.engine}</span>
+              <select data-engine-select disabled>
+                <option value="neural">Neural</option>
+                <option value="standard">Standard</option>
+              </select>
+            </label>
+            <label>
+              <span>{copy.output}</span>
+              <select data-format-select disabled>
+                <option value="mp3">MP3</option>
+                <option value="wav" disabled>WAV soon</option>
+                <option value="ogg" disabled>OGG soon</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <p class="tts-service-note" data-service-note>
+          {copy.serviceNote}
+        </p>
+      </section>
+
+      <aside class="tts-panel tts-result" aria-labelledby="tts-result-heading">
+        <div class="tts-section-head">
+          <div>
+            <p class="tts-kicker">{copy.result}</p>
+            <h2 id="tts-result-heading">{copy.audioOutput}</h2>
+          </div>
+          <span class="tts-result-state" data-result-state>{copy.idle}</span>
+        </div>
+
+        <div class="tts-result-panel" data-result-panel>
+          <div class="tts-empty-state" data-empty-state>
+            <div class="tts-idle-wave" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p>{copy.empty}</p>
+          </div>
+
+          <div class="tts-loading-state hidden" data-loading-state>
+            <div class="tts-loading-bars" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p>{copy.loading}</p>
+          </div>
+
+          <div class="tts-ready-state hidden" data-ready-state>
+            <audio controls data-audio-player></audio>
+            <a class="taaft-primary tts-download" href="#" download data-download-link>{copy.download}</a>
+            <dl class="tts-result-meta">
+              <div>
+                <dt>{copy.provider}</dt>
+                <dd data-result-provider>Amazon Polly</dd>
+              </div>
+              <div>
+                <dt>{copy.voice}</dt>
+                <dd data-result-voice>--</dd>
+              </div>
+              <div>
+                <dt>{copy.characters}</dt>
+                <dd data-result-characters>0</dd>
+              </div>
+              <div>
+                <dt>{copy.cached}</dt>
+                <dd data-result-cached>{isZh ? '否' : 'No'}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="tts-error-state hidden" data-error-state role="alert">
+            <strong>{copy.failed}</strong>
+            <p data-error-message>{copy.tryAgain}</p>
+          </div>
+        </div>
+
+        <details class="tts-info" open>
+          <summary>{copy.limits}</summary>
+          <ul>
+            <li><span>{copy.singleRequest}</span><strong data-limit-chars>{copy.loading}</strong></li>
+            <li><span>{copy.dailyQuota}</span><strong data-daily-quota>{copy.loading}</strong></li>
+            <li><span>{copy.inputStorage}</span><strong>{copy.notSaved}</strong></li>
+            <li><span>{copy.currentProvider}</span><strong>{copy.amazonOnly}</strong></li>
+          </ul>
+        </details>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<script>
+  import '../scripts/voicetools-tts';
+</script>

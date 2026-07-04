@@ -1,0 +1,14 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import VoiceToolsTtsTool from '../components/VoiceToolsTtsTool.astro';
+import '../styles/voicetools-tts.css';
+
+const pageDescription = 'Generate MP3 speech from text with Amazon Polly voices. Choose a voice, enter text, synthesize, play, and download audio.';
+---
+
+<BaseLayout title="Free Text to Speech" description={pageDescription}>
+  <VoiceToolsTtsTool lang="en" />
+  <SiteFooter lang="en" />
+</BaseLayout>
