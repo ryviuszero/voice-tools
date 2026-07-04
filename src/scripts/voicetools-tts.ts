@@ -234,6 +234,17 @@ function selectedVoice() {
   return state.voices.find((voice) => voice.id === state.selectedVoiceId) ?? null;
 }
 
+function visibleVoices() {
+  return state.selectedLanguage
+    ? state.voices.filter((voice) => voice.language === state.selectedLanguage)
+    : state.voices;
+}
+
+function voiceIdForCurrentLanguage(voiceId: string) {
+  const visibleVoiceIds = new Set(visibleVoices().map((voice) => voice.id));
+  return visibleVoiceIds.has(voiceId) ? voiceId : state.selectedVoiceId;
+}
+
 function voiceLabel(voice: TTSVoice | null) {
   if (!voice) return '--';
   const name = voice.display_name || voice.name || voice.id;
@@ -378,11 +389,9 @@ function renderSelects() {
     ? state.languages.map((language) => `<option value="${escapeAttr(language.id)}" ${state.selectedLanguage === language.id ? 'selected' : ''}>${escapeHtml(language.name)}</option>`).join('')
     : `<option value="">${copy.noLanguages}</option>`;
 
-  const visibleVoices = state.selectedLanguage
-    ? state.voices.filter((voice) => voice.language === state.selectedLanguage)
-    : state.voices;
-  selectors.voiceSelect.innerHTML = visibleVoices.length
-    ? visibleVoices.map((voice) => {
+  const currentVisibleVoices = visibleVoices();
+  selectors.voiceSelect.innerHTML = currentVisibleVoices.length
+    ? currentVisibleVoices.map((voice) => {
       const label = `${voice.display_name || voice.name} · ${voice.gender}`;
       return `<option value="${escapeAttr(voice.id)}" ${state.selectedVoiceId === voice.id ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     }).join('')
@@ -436,11 +445,9 @@ function syncSelectedDefaults() {
     state.selectedLanguage = state.languages.find((language) => language.id === 'en-US')?.id || state.languages[0].id;
   }
 
-  const visibleVoices = state.selectedLanguage
-    ? state.voices.filter((voice) => voice.language === state.selectedLanguage)
-    : state.voices;
-  if (!visibleVoices.some((voice) => voice.id === state.selectedVoiceId)) {
-    state.selectedVoiceId = visibleVoices[0]?.id || '';
+  const currentVisibleVoices = visibleVoices();
+  if (!currentVisibleVoices.some((voice) => voice.id === state.selectedVoiceId)) {
+    state.selectedVoiceId = currentVisibleVoices[0]?.id || '';
   }
 
   const voice = selectedVoice();
@@ -453,8 +460,9 @@ function syncSelectedDefaults() {
     state.segments.forEach((segment) => { segment.pitch = 'default'; });
   }
 
+  const visibleVoiceIds = new Set(currentVisibleVoices.map((voiceItem) => voiceItem.id));
   state.segments.forEach((segment) => {
-    if (!segment.voiceId || !state.voices.some((voiceItem) => voiceItem.id === segment.voiceId)) {
+    if (!segment.voiceId || !visibleVoiceIds.has(segment.voiceId)) {
       segment.voiceId = state.selectedVoiceId;
     }
   });
@@ -548,6 +556,7 @@ selectors.clearSegments.addEventListener('click', () => {
 selectors.languageSelect.addEventListener('change', () => {
   state.selectedLanguage = selectors.languageSelect.value;
   state.selectedVoiceId = '';
+  state.segments.forEach((segment) => { segment.voiceId = ''; });
   rerender();
 });
 
@@ -578,7 +587,7 @@ selectors.generate.addEventListener('click', async () => {
       format: state.selectedFormat,
       segments: segments.map((segment) => ({
         text: segment.text.trim(),
-        voice_id: segment.voiceId || state.selectedVoiceId,
+        voice_id: voiceIdForCurrentLanguage(segment.voiceId),
         pause_after_ms: Math.min(3000, Math.max(0, segment.pauseAfterMs)),
         rate: segment.rate,
         pitch: state.selectedEngine === 'neural' ? 'default' : segment.pitch,
